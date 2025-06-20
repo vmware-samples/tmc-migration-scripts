@@ -30,7 +30,7 @@ function create_dp_resources() {
     while true; do
         echo "==> Loading ${idx}/${total} in ${filename} ......"
         # Do we need to delete '.meta'?
-        local elem=$(yq -j ".${keyname}[${idx}]" ${DPDIR}/${filename} | yq -j -c 'del(.status)')
+        local elem=$(yq -o json ".${keyname}[${idx}]" ${DPDIR}/${filename} | yq -o json 'del(.status)')
         if [[ "${elem}" == "null" ]]; then
             break
         fi
@@ -61,10 +61,10 @@ function enable_dataprotection() {
         fi
         echo "==> Loading ${idx}/${total} in ${filename} ......"
         # Do we need to delete '.meta'?
-        yq -y ".[${idx}]" ${DPDIR}/${filename} | yq -y 'del(.status)' > ${TEMPFILE}
+        yq -o yaml ".[${idx}]" ${DPDIR}/${filename} | yq -o yaml 'del(.status)' > ${TEMPFILE}
         cat ${TEMPFILE}
         if [[ "${scope}" == "cluster" ]]; then
-            fullname=$(yq '.fullName | .managementClusterName + "." + .provisionerName + "." + clusterName' ${TEMPFILE})
+            fullname=$(yq '.fullName | .managementClusterName + "." + .provisionerName + "." + .clusterName' ${TEMPFILE})
             if ! grep -qxf "${fullname}" "$ONBOARDED_CLUSTER_INDEX_FILE"; then
                 echo "Cluster ${fullname} doesn't exist, just skip it"
                 idx=$((idx+1))
@@ -80,7 +80,8 @@ function enable_dataprotection() {
 
 # Load backup location for both org and clsuter
 create_dp_resources "backup_location_org.yaml" "backupLocations" "backup-location"
-create_dp_resources "backup_location_cluster.yaml" "backupLocations" "backup-location"
+# It seems we don't need create location for cluster, because clusters are in org already
+#create_dp_resources "backup_location_cluster.yaml" "backupLocations" "backup-location"
 
 # Load schedule
 create_dp_resources "schedule.yaml" "schedules" "schedule"
