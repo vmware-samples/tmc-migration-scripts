@@ -38,7 +38,7 @@ done
 #TMC_SAAS_ENDPOINT=<required>
 
 echo "Saving dataprotection for clustergroups ......"
-yq -r '.backupLocations[] | .spec.assignedGroups[] | .clustergroup.name' ${DPDIR}/backup_location_org.yaml | while read -r groupname; do
+yq -r '.backupLocations[] | .spec.assignedGroups[] | select(.clustergroup) | .clustergroup.name' ${DPDIR}/backup_location_org.yaml | while read -r groupname; do
     echo "    clustergroup: ${groupname}"
     dpgrp=$(curl -k -s --http1.1 \
             -H "Authorization: Bearer $TMC_ACCESS_TOKEN" \
@@ -46,12 +46,13 @@ yq -r '.backupLocations[] | .spec.assignedGroups[] | .clustergroup.name' ${DPDIR
             -X GET \
 	    ${TMC_SAAS_ENDPOINT}/v1alpha1/clustergroups/${groupname}/dataprotection)
     if [[ "${dpgrp}" != "{}" ]]; then
-        echo ${dpgrp} | yq -o yaml '.dataProtections' >> ${DPDIR}/dataprotection_clustergroups.yaml
+        echo ${dpgrp} | yq -o yaml -P '.dataProtections' >> ${DPDIR}/dataprotection_clustergroups.yaml
     fi
 done
 
 echo "Saving dataprotection for clusters ......"
-yq -r '.backupLocations[] | .fullName | .managementClusterName + " " + .provisionerName + " " + .clusterName' ${DPDIR}/backup_location_cluster.yaml | while read -r mgmtname provname clname; do
+#yq -r '.backupLocations[] | .fullName | .managementClusterName + " " + .provisionerName + " " + .clusterName' ${DPDIR}/backup_location_cluster.yaml | while read -r mgmtname provname clname; do
+yq -r '.backupLocations[] | .spec.assignedGroups[] | select(.cluster) | .cluster.managementClusterName + " " + .cluster.provisionerName + " " + .cluster.name' ${DPDIR}/backup_location_org.yaml | while read -r mgmtname provname clname; do
     echo "    cluster: ${clname}"
     dpcl=$(curl -k -s --http1.1 \
             -H "Authorization: Bearer $TMC_ACCESS_TOKEN" \
@@ -59,6 +60,6 @@ yq -r '.backupLocations[] | .fullName | .managementClusterName + " " + .provisio
             -X GET \
             ${TMC_SAAS_ENDPOINT}/v1alpha1/clusters/${clname}/dataprotection\?fullName.managementClusterName=${mgmtname}\&fullName.provisionerName=${provname})
     if [[ "${dpgrp}" != "{}" ]]; then
-        echo ${dpcl} | yq -o yaml '.dataProtections' >> ${DPDIR}/dataprotection_clusters.yaml
+        echo ${dpcl} | yq -o yaml -P '.dataProtections' >> ${DPDIR}/dataprotection_clusters.yaml
     fi
 done
