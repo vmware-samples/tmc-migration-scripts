@@ -1,7 +1,7 @@
 #!/bin/bash
 # Resource: Access (Under Administration)
 
-source 033-sm-api-call.sh
+source 033-base-sm-api-call.sh
 DIR=credential-access
 DATA_DIR=data
 
