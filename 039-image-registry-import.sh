@@ -16,6 +16,7 @@ fi
 
 if [ ! -d $DIR/$TEMPLATE_DIR ]; then
   echo "Nothing to do without directory $DIR/$TEMPLATE_DIR, please generate template files first"
+  echo "Please fill in the missing values in each template file(image-registry/template/*.yaml) manually."
   exit 0
 fi
 
