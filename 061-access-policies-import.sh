@@ -1,11 +1,6 @@
 #! /bin/bash
 
-# This script depends on below environment variables
-# export TMC_SM_ENDPOINT="https://exmaple.tanzu.broadcom.com"
-# export TMC_SM_ACCESS_TOKEN="<API_TOKEN>"
-# export TMC_SM_ID_TOKEN="<API_ID_TOKEN>"
-# sm-api-call.sh exposes above variables
-source sm-api-call.sh
+source 033-sm-api-call.sh
 
 TEMP_DIR=$(mktemp -d)
 SRC_DIR="policies/iam"
@@ -26,11 +21,8 @@ import_rolebindings() {
         params="?$params"
     fi
 
-     curl -f -v -X PUT $TMC_SM_ENDPOINT/v1alpha1/${scope}:iam${resource_name}${params} \
-            -H "Content-Type: application/json" \
-            -H "Authorization: $TMC_SM_ACCESS_TOKEN" \
-            -H "grpc-metadata-x-user-id: $TMC_SM_ID_TOKEN"
-            -d "@$rolebindings"
+    url="v1alpha1/${scope}:iam${resource_name}${params}"
+    curl_api_call -X PUT -d "@$rolebindings" "$url"
 }
 
 import_org_rolebindings() {
