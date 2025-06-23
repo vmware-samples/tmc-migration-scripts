@@ -5,7 +5,8 @@
 
 
 ## Create CLI context.
-tanzu context create migration --type tmc --endpoint $ORG_NAME.tmc.tanzu.broadcom.com:443
+export TMC_CONTEXT=migration
+tanzu context create ${TMC_CONTEXT} --type tmc --endpoint $ORG_NAME.tmc.tanzu.broadcom.com:443
 
 
 ## Alternative option:
