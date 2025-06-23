@@ -15,7 +15,7 @@ if [ ! -d $DIR ]; then
 fi
 
 if [ ! -d $DIR/$TEMPLATE_DIR ]; then
-  echo "Nothing to do without directory $DIR/$TEMPLATE_DIR, please generate template files with script 038-proxy-create-template.sh"
+  echo "Nothing to do without directory $DIR/$TEMPLATE_DIR, please generate template files with script 038-admin-proxy-create-template.sh"
   echo "Please fill in the missing values in each template file(proxy/template/*.yaml) manually."
   exit 0
 fi
