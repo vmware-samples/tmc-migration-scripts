@@ -1,7 +1,7 @@
 #!/bin/bash
 # Resource: Credential(Accounts) (Under Administration)
 
-# This is the first script to generate template files without credentials
+# This is the first script(037-credentials-create-template.sh) to generate template files without credentials
 
 # The first script will generate template files under the folder: credential/template.
 # Then users need to fill in the missing fields such as CA, credentials.
@@ -20,7 +20,7 @@ if [ ! -d $DIR/$TEMPLATE_DIR ]; then
   mkdir -p $DIR/$TEMPLATE_DIR
 fi
 
-echo "Generate template yaml files for credentials"
+echo "Generate template yaml files for credentials with script 037-credentials-create-template.sh"
 
 # Handle with IMAGE_REGISTRY and PROXY_CONFIG in another script
 # No longer support the AZURE_AKS and AWS_EKS.
