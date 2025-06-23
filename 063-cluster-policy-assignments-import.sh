@@ -1,0 +1,34 @@
+#! /bin/bash
+
+source utils/policy-helper.sh
+
+TEMP_DIR=$(mktemp -d)
+SRC_DIR="policies/assignments"
+
+import_cluster_policies() {
+    scope="clusters"
+    policies_temp="$TEMP_DIR/$scope"
+    mkdir -p $policies_temp
+
+    generate_policy_spec "$scope" "$name" "$policies_temp"
+
+    pushd $policies_temp > /dev/null
+        for p_file in $(ls *.yaml)
+        do
+            cls_full_name=$(log info "$p_file" | sed 's/.yaml$//g')
+
+            IFS='_' read -r mgmt prvn cls <<< "$cls_full_name"
+
+            yq e -i ".fullName.managementClusterName = \"$mgmt\" | .fullName.provisionerName = \"$prvn\" | .fullName.clusterName = \"$cls\"" $p_file
+
+            log info "Importing policy assignment on cluster $mgmt/$prvn/$cls ..." 
+            tanzu mission-control policy create -s cluster -f $p_file
+        done
+    popd
+}
+
+log "************************************************************************"
+log "* Import Policy Assignments on Clusters to TMC SM ..."
+log "************************************************************************"
+
+import_cluster_policies
