@@ -9,9 +9,15 @@ init "[053] Import the cluster continuous deliveries"
 find . -type f -name '*.yml' | while read -r file; do
   REASON=`yq '.status.conditions.Ready.reason' $file`
   if [ $REASON == "Enabled" ] || [ $REASON == "Enabling" ]; then
-    CLUSTER_NAME=`yq '.fullName.clusterName' $file`
-    MGMT_CLUSTER_NAME=`yq '.fullName.managementClusterName' $file`
-    PROVISIONER_NAME=`yq '.fullName.provisionerName' $file`
-    tanzu tmc continuousdelivery enable -s cluster -m $MGMT_CLUSTER_NAME -p $PROVISIONER_NAME -c $CLUSTER_NAME
+    set +e
+    check_onboarded_cluster_for_yaml $file
+
+    if [ $? -eq 1 ]; then
+      set -e
+      CLUSTER_NAME=`yq '.fullName.clusterName' $file`
+      MGMT_CLUSTER_NAME=`yq '.fullName.managementClusterName' $file`
+      PROVISIONER_NAME=`yq '.fullName.provisionerName' $file`
+      tanzu tmc continuousdelivery enable -s cluster -m $MGMT_CLUSTER_NAME -p $PROVISIONER_NAME -c $CLUSTER_NAME
+    fi
   fi
 done

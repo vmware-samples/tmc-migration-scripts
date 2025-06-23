@@ -5,7 +5,7 @@ source 033-sm-api-call.sh
 TEMP_DIR=$(mktemp -d)
 SRC_DIR="policies/iam"
 
-ONBOARDED_CLUSTER_INDEX_FILE="clusters/onboared-clusters-name-index"
+ONBOARDED_CLUSTER_INDEX_FILE="clusters/onboarded-clusters-name-index"
 
 import_rolebindings() {
     rolebindings=$1
@@ -57,7 +57,7 @@ import_clustergroup_rolebindings() {
             log info "[SKIP] no direct rolebinding for $scope:$resource_name is required to imported"
             continue
         fi
-        
+
         jq '.effective[] | select(.spec.inherited != true).spec.policySpec' $resource_name.json > $rolebindings
         import_rolebindings "$rolebindings" "$scope" "$resource_name"
     done

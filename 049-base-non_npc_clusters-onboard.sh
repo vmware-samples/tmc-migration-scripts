@@ -25,7 +25,7 @@ done
 # Attach non-NPC clusters.
 KUBECONFIG_INDEX_FILE=clusters/attached-wc-kubeconfig-index-file
 INPUT_CLUSTERS_FILE=clusters/attached_non_npc_clusters.yaml
-ONBOARDED_CLUSTER_INDEX_FILE="clusters/onboared-clusters-name-index"
+ONBOARDED_CLUSTER_INDEX_FILE="clusters/onboarded-clusters-name-index"
 
 ATTACHED_CLUSTER_DIR=clusters/attached
 mkdir -p $ATTACHED_CLUSTER_DIR
