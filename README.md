@@ -7,6 +7,10 @@ This is a repo to store the scripts in the [Migrate TMC SaaS to SM](https://docs
 | Script | Description | Status | Notes |
 |--------|-------------|--------|-------|
 | [001-base-saas_stack-connect.sh](./001-base-saas_stack-connect.sh)   | Authenticate and connect to the SaaS platform | tbd | - Include both CLI and API options <br> - Once the token or context expired, rerun the script to regenerate one |
+| [031-base-managed_clusters-offboard.sh](./031-base-managed_clusters-offboard.sh) | Offboard the managed TKG clusters from TMC SaaS | tbd | VKS (aka. TKGs) and TKGm clusters |
+| [032-base-attached_non_npc_clusters-offboard.sh](./032-base-attached_non_npc_clusters-offboard.sh) | Offboard the attached non-NPC clusters from TMC SaaS | tbd | Attached Non-NPC clusters |
+| [048-base-managed_clusters-onboard.sh](./048-base-managed_clusters-onboard.sh) | Onboard the managed TKG clusters to TMC SM | tbd | VKS (aka. TKGs) and TKGm clusters |
+| [049-base-non_npc_clusters-onboard.sh](./049-base-non_npc_clusters-onboard.sh) | Onboard the attached non-NPC clusters to TMC SM | tbd | Attached Non-NPC clusters |
 
 **Note:**
 Script file name follows pattern `<index>-<scope>-<resource>-<operation>.sh`.
