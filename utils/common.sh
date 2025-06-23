@@ -1,5 +1,9 @@
 #!/bin/bash
 
+SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
+
+source $SCRIPT_DIR/log.sh
+
 pushd () {
     command pushd "$@" > /dev/null
 }
@@ -10,9 +14,9 @@ popd () {
 
 on_exit() {
     if [ $? -eq 0 ]; then
-        echo "$* completed successfully!"
+        log info "$* completed successfully! ${COLOR_SUCCESS}✔${COLOR_RESET}"
     else
-        echo "$* exited with an error."
+        log error "$* exited with an error. ${COLOR_ERROR}✖${COLOR_RESET}"
     fi
     popd
 }
@@ -23,7 +27,7 @@ init () {
     local SCRIPT_DIR="$( cd "$( dirname "$0" )" &> /dev/null && pwd )"
     local SCRIPT_FILE=$(basename "$0")
 
-    echo "$msg ..."
+    log info "$msg ..."
 
     local N=`echo ${SCRIPT_FILE%.sh} | awk -F- '{print NF-1}'`
     local DIR=$SCRIPT_DIR/data/`echo ${SCRIPT_FILE%.sh} | cut -d - -f 2-$N`

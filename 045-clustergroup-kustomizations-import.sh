@@ -2,7 +2,7 @@
 set -eE -o pipefail
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-source $SCRIPT_DIR/common.sh
+source $SCRIPT_DIR/utils/common.sh
 
 init "[045] Import the cluster group kustomizations"
 

@@ -4,6 +4,7 @@
 COLOR_RESET="\033[0m"
 COLOR_WARN="\033[0;33m"    # Yellow
 COLOR_ERROR="\033[0;31m"   # Red
+COLOR_SUCCESS="\033[0;32m" # Green
 
 log() {
     local level=""
@@ -20,7 +21,7 @@ log() {
 
     case "$level" in
         info)
-            echo -e "$timestamp INFO $message"
+            echo -e "$timestamp INFO  $message"
             ;;
         warn | warning)
             echo -e "$timestamp ${COLOR_WARN}WARNING${COLOR_RESET} $message"
