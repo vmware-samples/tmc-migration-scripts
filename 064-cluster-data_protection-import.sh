@@ -2,7 +2,7 @@
 
 set -e
 
-ONBOARDED_CLUSTER_INDEX_FILE="clusters/onboared-clusters-name-index"
+ONBOARDED_CLUSTER_INDEX_FILE="clusters/onboarded-clusters-name-index"
 TEMPFILE=_temp_dp_file_$(date +%s)
 DPDIR=data-protection-data
 if [ ! -d "${DPDIR}" ]; then

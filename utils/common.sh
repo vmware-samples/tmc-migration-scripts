@@ -41,3 +41,23 @@ init () {
 
     trap "on_exit $msg" EXIT
 }
+
+ONBOARDED_CLUSTER_INDEX_FILE="$SCRIPT_DIR/../clusters/onboarded-clusters-name-index"
+
+check_onboarded_cluster () {
+    local onboarded=1
+    if ! grep "^$1.$2.$3$" $ONBOARDED_CLUSTER_INDEX_FILE &> /dev/null; then
+        log debug "Cluster $1:$2:$3 is not onboarded"
+        onboarded=0
+    fi
+    return $onboarded
+}
+
+check_onboarded_cluster_for_yaml () {
+    local file=$1
+    local MGMT_CLUSTER_NAME=`yq .fullName.managementClusterName $file`
+    local PROVISIONER_NAME=`yq .fullName.provisionerName $file`
+    local CLUSTER_NAME=`yq .fullName.clusterName $file`
+    check_onboarded_cluster $MGMT_CLUSTER_NAME $PROVISIONER_NAME $CLUSTER_NAME
+    return $?
+}

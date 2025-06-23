@@ -66,7 +66,7 @@ done
 
 # Mange the workload clusters.
 MIN_VERSION="1.28.0"
-ONBOARDED_CLUSTER_INDEX_FILE="clusters/onboared-clusters-name-index"
+ONBOARDED_CLUSTER_INDEX_FILE="clusters/onboarded-clusters-name-index"
 
 # Strip v prefix and metadata from version (e.g., v1.29.4+ -> 1.29.4)
 sanitize_version() {
