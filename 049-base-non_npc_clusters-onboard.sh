@@ -2,36 +2,20 @@
 
 INPUT_CLUSTERS_FILE=clusters/attached_non_npc_clusters.yaml
 WC_KUBECONFIG_INDEX_FILE=clusters/attached-wc-kubeconfig-index-file
+PLACEHOLDER_TEXT="/path/to/the/real/mc_kubeconfig/file"
 
-mkdir -p clusters
-
-# Iterate through clusters
-index=0
-total=$(yq '.clusters | length' $INPUT_CLUSTERS_FILE)
-
-while [ "$index" -lt "$total" ]; do
-  health=$(yq ".clusters[$index].status.health" $INPUT_CLUSTERS_FILE)
-
-  if [ "$health" == "HEALTHY" ]; then
-    name=$(yq ".clusters[$index].fullName.name" $INPUT_CLUSTERS_FILE)
-    echo "Append cluster $name to $WC_KUBECONFIG_INDEX_FILE"
-    echo "$name: /path/to/the/real/kubeconfig/file" >> "$WC_KUBECONFIG_INDEX_FILE"
-  fi
-
-  index=$((index + 1))
-done
+# If the $MC_KUBECONFIG_INDEX_FILE file is NOT completely updated, then stop to proceed.
+if grep -q "$PLACEHOLDER_TEXT" "$WC_KUBECONFIG_INDEX_FILE"; then
+  echo "⚠️  Warning: Placeholder text '$PLACEHOLDER_TEXT' found in $WC_KUBECONFIG_INDEX_FILE. Please replace it."
+  exit 1
+fi
 
 
 # Attach non-NPC clusters.
-KUBECONFIG_INDEX_FILE=clusters/attached-wc-kubeconfig-index-file
-INPUT_CLUSTERS_FILE=clusters/attached_non_npc_clusters.yaml
 ONBOARDED_CLUSTER_INDEX_FILE="clusters/onboarded-clusters-name-index"
 
 ATTACHED_CLUSTER_DIR=clusters/attached
 mkdir -p $ATTACHED_CLUSTER_DIR
-
-# Remove orgId first.
-yq -i '(.clusters[] | .fullName) |= del(.orgId)' "$INPUT_CLUSTERS_FILE"
 
 # Iterate through clusters
 index=0
@@ -48,13 +32,15 @@ while [ "$index" -lt "$total" ]; do
 
     # Save cluster data without .status field.
     yq "del(.clusters[$index].status) | .clusters[$index]" $INPUT_CLUSTERS_FILE > "$file"
+    # Remove orgId.
+    yq -i '(.clusters[$index] | .fullName) |= del(.orgId)' $file
 
     # Look up the kubeconfig file path from the provided index file
-    KUBECONFIG_PATH=$(grep "^$name:" "$KUBECONFIG_INDEX_FILE" | awk '{print $2}')
+    KUBECONFIG_PATH=$(grep "^$name:" "$WC_KUBECONFIG_INDEX_FILE" | awk '{print $2}')
 
     # Attach the cluster using cli.
     if [[ -z "$KUBECONFIG_PATH" ]]; then
-      echo "No kubeconfig path found for cluster '$name' from '$KUBECONFIG_INDEX_FILE', attaching cluster without kubeconfig."
+      echo "No kubeconfig path found for cluster '$name' from '$WC_KUBECONFIG_INDEX_FILE', attaching cluster without kubeconfig."
       echo "Extra attach operations will be needed by following guide on the UI"
       tanzu tmc cluster attach -f $file
     else

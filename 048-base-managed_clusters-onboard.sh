@@ -2,39 +2,22 @@
 
 MC_LIST_YAML_FILE=clusters/mc_list.yaml
 MC_KUBECONFIG_INDEX_FILE=clusters/mc-kubeconfig-index-file
+REGISTERED_FILE="clusters/mc_registered.txt"
+PLACEHOLDER_TEXT="/path/to/the/real/mc_kubeconfig/file"
 
-# Iterate through clusters
-index=0
-total=$(yq '.managementClusters | length' $MC_LIST_YAML_FILE)
-
-while [ "$index" -lt "$total" ]; do
-  health=$(yq ".managementClusters[$index].status.health" $MC_LIST_YAML_FILE)
-  name=$(yq ".managementClusters[$index].fullName.name" $MC_LIST_YAML_FILE)
-
-  if [ "$health" == "HEALTHY" ] && [[ "$name" != "aks" && "$name" != "eks" && "$name" != "attached" ]]; then
-    echo "Append management cluster $name to $MC_KUBECONFIG_INDEX_FILE"
-    echo "$name: /path/to/the/real/mc_kubeconfig/file" >> "$MC_KUBECONFIG_INDEX_FILE"
-  fi
-
-  index=$((index + 1))
-done
+# If the $MC_KUBECONFIG_INDEX_FILE file is NOT completely updated, then stop to proceed.
+if grep -q "$PLACEHOLDER_TEXT" "$MC_KUBECONFIG_INDEX_FILE"; then
+  echo "⚠️  Warning: Placeholder text '$PLACEHOLDER_TEXT' found in $MC_KUBECONFIG_INDEX_FILE. Please replace it."
+  exit 1
+fi
 
 
-# Admin kubeconfig index file to get the real admin kubeconfig of management clusters for registration processes.
-KUBECONFIG_INDEX_FILE=clusters/mc-kubeconfig-index-file
-# The management cluster list exported before.
-MC_LIST_YAML_FILE=clusters/mc_list.yaml
-
-REGISTERED_FILE="clusters/mc_registered.txt"D
 # Reset tracking file
 : > "$REGISTERED_FILE"
 
 # Iterate through clusters
 index=0
 total=$(yq '.managementClusters | length' $MC_LIST_YAML_FILE)
-
-# Remove orgId first
-yq -i '(.managementClusters[] | .fullName) |= del(.orgId)' $MC_LIST_YAML_FILE
 
 while [ "$index" -lt "$total" ]; do
   health=$(yq ".managementClusters[$index].status.health" $MC_LIST_YAML_FILE)
@@ -46,9 +29,11 @@ while [ "$index" -lt "$total" ]; do
 
     # Save cluster data without .status field.
     yq "del(.managementClusters[$index].status) | .managementClusters[$index]" $MC_LIST_YAML_FILE > "$file"
+    # Remove orgId.
+    yq -i '(.managementClusters[$index] | .fullName) |= del(.orgId)' $file
 
     # Look up the kubeconfig file path from the provided index file
-    KUBECONFIG_PATH=$(grep "^$name:" "$KUBECONFIG_INDEX_FILE" | awk '{print $2}')
+    KUBECONFIG_PATH=$(grep "^$name:" "$MC_KUBECONFIG_INDEX_FILE" | awk '{print $2}')
 
     # Register the cluster using cli.
     if tanzu tmc mc get "$name" >/dev/null 2>&1; then
@@ -57,7 +42,7 @@ while [ "$index" -lt "$total" ]; do
       tanzu tmc mc register "$name" -f "$file" --kubeconfig "$KUBECONFIG_PATH"
     fi
     
-    # Track the name of succesfully registered management cluster for later use.
+    # Track the name of successfully registered management cluster for later use.
     echo "$name" >> "$REGISTERED_FILE"
   fi
 
@@ -78,7 +63,7 @@ compare_versions() {
   [ "$(printf "%s\n%s" "$2" "$1" | sort -V | head -n1)" = "$2" ]
 }
 
-# Read management cluster name from clusters/mc_registered.txt
+# Read management cluster name from $REGISTERED_FILE.
 while IFS= read -r mc_name; do
     wc_file="clusters/wc_of_${mc_name}.yaml"
     
@@ -110,14 +95,14 @@ while IFS= read -r mc_name; do
         [[ -n "$proxy" && "$proxy" != "null" ]] && cmd+=" --proxy-name \"$proxy\""
         [[ -n "$registry" && "$registry" != "null" ]] && cmd+=" --image-registry \"$registry\""
 
-	  echo $cmd
-         eval $cmd
-         if [ $? -eq 0 ]; then
-           onboarded_cluster_name="$mgmt.$prov.$name"
-           if ! grep -qxF "$onboarded_cluster_name" "$ONBOARDED_CLUSTER_INDEX_FILE"; then
-             # If it doesn't exist, append it
-             echo "$onboarded_cluster_name" >> "$ONBOARDED_CLUSTER_INDEX_FILE"
-           fi
-         fi
+	    echo "Run $cmd"
+        eval $cmd
+        if [ $? -eq 0 ]; then
+            onboarded_cluster_name="$mgmt.$prov.$name"
+            if ! grep -qxF "$onboarded_cluster_name" "$ONBOARDED_CLUSTER_INDEX_FILE"; then
+                # If it doesn't exist, append it
+                echo "$onboarded_cluster_name" >> "$ONBOARDED_CLUSTER_INDEX_FILE"
+            fi
+        fi
     done
-done < "clusters/mc_registered.txt"
+done < $REGISTERED_FILE
