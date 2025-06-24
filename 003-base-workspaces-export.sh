@@ -1,13 +1,12 @@
 #!/bin/bash
 # Resource: Workspace
 
-DIR=workspace
-DATA_DIR=data
+DATA_DIR=data/workspace
 
-if [ -d $DIR ]; then
-  rm -rf $DIR/*
+if [ -d $DATA_DIR ]; then
+  rm -rf $DATA_DIR/*
 fi
 
-mkdir -p $DIR/$DATA_DIR
+mkdir -p $DATA_DIR
 
-tanzu tmc workspace list -o yaml > "$DIR/$DATA_DIR/workspaces.yaml"
+tanzu tmc workspace list -o yaml > "$DATA_DIR/workspaces.yaml"

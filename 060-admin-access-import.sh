@@ -1,16 +1,15 @@
 #!/bin/bash
 # Resource: Access (Under Administration)
 
-source 033-base-sm-api-call.sh
-DIR=credential-access
-DATA_DIR=data
+source ./utils/sm-api-call.sh
+DATA_DIR=data/credential-access
 
-if [ ! -d $DIR ]; then
-  echo "Nothing to do without directory $DIR, please backup data first"
+if [ ! -d $DATA_DIR ]; then
+  echo "Nothing to do without directory $DATA_DIR, please backup data first"
   exit 0
 fi
 
-for file in "$DIR"/$DATA_DIR/*; do
+for file in $DATA_DIR/*; do
   if [ -f "$file" ]; then
     filename=`basename $file .yaml`
     echo "Start to check $filename"

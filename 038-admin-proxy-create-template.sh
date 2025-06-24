@@ -6,24 +6,23 @@
 # The first script will generate template files under the folder: proxy/template.
 # Then users need to fill in the missing fields such as CA, credentials.
 
-DIR=proxy
-DATA_DIR=data
+DATA_DIR=data/proxy
 TEMPLATE_DIR=template
 credential_type_json_template='{"type":{"kind":"Credential","version":"v1alpha1","package":"vmware.tanzu.manage.v1alpha1.account.credential.Credential"}}'
 proxy_data_json_template='{"httpUserName": "","httpPassword": "","httpsUserName": "","httpsPassword": "","proxyCABundle": ""}'
 
-if [ ! -d $DIR ]; then
-  echo "Nothing to do without directory $DIR, please backup data first"
+if [ ! -d $DATA_DIR ]; then
+  echo "Nothing to do without directory $DATA_DIR, please backup data first"
   exit 0
 fi
 
-if [ ! -d $DIR/$TEMPLATE_DIR ]; then
-  mkdir -p $DIR/$TEMPLATE_DIR
+if [ ! -d $DATA_DIR/$TEMPLATE_DIR ]; then
+  mkdir -p $DATA_DIR/$TEMPLATE_DIR
 fi
 
 echo "Generate proxy configuration template yaml files"
 
-proxyList=$(cat $DIR/$DATA_DIR/proxies.yaml | yq eval -o=json - | jq -c '.credentials[]')
+proxyList=$(cat $DATA_DIR/proxies.yaml | yq eval -o=json - | jq -c '.credentials[]')
 
 while IFS= read -r proxy; do
   name=$(echo "$proxy" | jq -r '.fullName.name // ""')
@@ -57,4 +56,4 @@ spec:
 
 echo "##################################################################"
 echo "The generated template files are without credentials."
-echo "You need to go to the dir: proxy/template to fill the missing field values for each template file before execute the import script."
+echo "You need to go to the dir: data/proxy/template to fill the missing field values for each template file before execute the import script."

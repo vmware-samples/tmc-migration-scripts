@@ -1,21 +1,20 @@
 #!/bin/bash
 # Resource: Settings (Under Administration)
 
-DIR=setting
-DATA_DIR=data
+DATA_DIR=data/setting
 scopes=("cluster" "clustergroup" "organization")
 
-if [ -d $DIR ]; then
-  rm -rf $DIR/*
+if [ -d $DATA_DIR ]; then
+  rm -rf $DATA_DIR/*
 fi
 
-mkdir -p $DIR/$DATA_DIR
+mkdir -p $DATA_DIR
 
 for scope in "${scopes[@]}"; do
-  mkdir -p $DIR/$DATA_DIR/$scope
+  mkdir -p $DATA_DIR/$scope
   tanzu tmc setting list --scope $scope -o yaml | \
     yq eval -o=json - | jq '.' | \
     jq 'del(.totalCount)' | \
     jq '.effective |=map(select(.spec.inherited == false))' | \
-    yq eval -P -  > "$DIR/$DATA_DIR/$scope/settings.yaml"
+    yq eval -P -  > "$DATA_DIR/$scope/settings.yaml"
 done
