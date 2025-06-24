@@ -13,10 +13,15 @@ fi
 for file in "$DIR"/$DATA_DIR/*; do
   if [ -f "$file" ]; then
     filename=`basename $file .yaml`
+    echo "Start to check $filename"
     result=($(echo "$filename" | awk -F'---' '{print $1,$2}'))
     policyListLen=`cat "$file" | yq eval -o=json - | jq '.policyList | length'`
-    if [ "$policyListLen" != "1" ]; then
+    if [ "$policyListLen" = "1" ]; then
+      echo "Ignore built-in role $filename"
+    fi
 
+    if [ "$policyListLen" != "1" ]; then
+      echo "Start to create $filename"
       roleBindings=`cat "$file" | yq eval -o=json - | \
         jq -c '.policyList[0]' | jq -c 'del(.meta)'`
 
