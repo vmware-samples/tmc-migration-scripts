@@ -11,6 +11,56 @@ if grep -q "$PLACEHOLDER_TEXT" "$MC_KUBECONFIG_INDEX_FILE"; then
   exit 1
 fi
 
+# Clean up registration resources and recreate the config.
+function prepare() {
+    namespaces=$(kubectl get ns --no-headers -o custom-columns=":metadata.name" | grep '^svc-tmc-')
+
+    for ns in $namespaces; do
+        echo "Checking namespace: $ns"
+
+        # Check and delete AgentInstall if exists
+        if kubectl get agentinstall -n "$ns" &>/dev/null; then
+            echo "🧹 Deleting AgentInstall(s) in $ns..."
+            kubectl delete agentinstall --all -n "$ns"
+        else
+            echo "No AgentInstall in $ns"
+        fi
+
+        # Check and delete AgentConfig if exists
+        if kubectl get agentconfig -n "$ns" &>/dev/null; then
+            echo "Deleting AgentConfig(s) in $ns..."
+            kubectl delete agentconfig --all -n "$ns"
+        else
+            echo "No AgentConfig in $ns"
+        fi
+
+        # Create agent config.
+        create_agent_config $ns
+    done
+}
+
+function create_agent_config() {
+    local namespace="$1"
+
+    ENDPOINT=$(tanzu context get $TMC_SM_CONTEXT | yq .globalOpts.endpoint)
+    DOMAIN=$(echo "$ENDPOINT" | cut -d':' -f1)
+    CA_CERTIFICATE=$(openssl s_client -connect $ENDPOINT -showcerts </dev/null 2>/dev/null | openssl x509 -outform PEM)
+
+    cat <<EOF | kubectl apply -f -
+apiVersion: "installers.tmc.cloud.vmware.com/v1alpha1"
+kind: "AgentConfig"
+metadata:
+  name: "tmc-agent-config"
+  namespace: "$namespace"
+spec:
+  caCerts: |-
+$(echo "$CA_CERTIFICATE" | sed 's/^/    /')
+  allowedHostNames:
+    - $DOMAIN
+EOF
+
+}
+
 
 # Reset tracking file
 : > "$REGISTERED_FILE"
@@ -25,15 +75,21 @@ while [ "$index" -lt "$total" ]; do
 
   if [ "$health" == "HEALTHY" ] && [[ "$name" != "aks" && "$name" != "eks" && "$name" != "attached" ]]; then
     orgId=$(yq ".managementClusters[$index].fullName.orgId" $MC_LIST_YAML_FILE)
-    file="mc_${orgId}_${name}.yaml"
+    file="clusters/mc_${orgId}_${name}.yaml"
+
+    echo "Processing mc $name [health=$health]"
 
     # Save cluster data without .status field.
     yq "del(.managementClusters[$index].status) | .managementClusters[$index]" $MC_LIST_YAML_FILE > "$file"
     # Remove orgId.
-    yq -i '(.managementClusters[$index] | .fullName) |= del(.orgId)' $file
+    yq -i 'del(.fullName.orgId)' $file
 
     # Look up the kubeconfig file path from the provided index file
     KUBECONFIG_PATH=$(grep "^$name:" "$MC_KUBECONFIG_INDEX_FILE" | awk '{print $2}')
+    export KUBECONFIG=$KUBECONFIG_PATH
+
+    # Prepare.
+    prepare
 
     # Register the cluster using cli.
     if tanzu tmc mc get "$name" >/dev/null 2>&1; then
