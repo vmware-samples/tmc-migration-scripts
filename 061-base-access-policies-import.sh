@@ -18,7 +18,7 @@ import_org_rolebindings() {
         jq '.policyList[0] | del(.meta)' rolebindings.json > $rolebindings
         import_rolebindings "$rolebindings" "$scope"
     fi
-    popd
+    popd > /dev/null
 }
 
 import_clustergroup_rolebindings() {
@@ -41,7 +41,7 @@ import_clustergroup_rolebindings() {
         jq '.effective[] | select(.spec.inherited != true).spec.policySpec' $resource_name.json > $rolebindings
         import_rolebindings "$rolebindings" "$scope" "$resource_name"
     done
-    popd
+    popd > /dev/null
 }
 
 import_namespace_rolebindings() {
@@ -71,7 +71,7 @@ import_namespace_rolebindings() {
 
         import_rolebindings "$rolebindings" "clusters/$cls/$scope" "$name" "fullName.managementClusterName=$mgmt&fullName.provisionerName=$prvn"
     done
-    popd
+    popd > /dev/null
 }
 
 
@@ -95,7 +95,7 @@ import_workspace_rolebindings() {
         jq '.effective[] | select(.spec.inherited != true).spec.policySpec' $resource_name.json > $rolebindings
         import_rolebindings "$rolebindings" "$scope" "$resource_name"
     done
-    popd
+    popd > /dev/null
 }
 
 log "************************************************************************"

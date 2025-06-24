@@ -36,7 +36,7 @@ import_cluster_rolebindings() {
         log info "Importing access policies on cluster $mgmt/$prvn/$name ..."
         import_rolebindings "$rolebindings" "$scope" "$name" "fullName.managementClusterName=$mgmt&fullName.provisionerName=$prvn"
     done
-    popd
+    popd > /dev/null
 }
 
 log "************************************************************************"
