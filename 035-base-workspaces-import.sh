@@ -12,12 +12,12 @@ fi
 workspaceList=`cat $DIR/$DATA_DIR/workspaces.yaml | yq eval -o=json - | jq '.' | \
   jq -c '.workspaces[]'`
 
-for workspace in $workspaceList; do
+while IFS= read -r workspace; do
   name=$(echo "$workspace" | jq -r ".fullName.name")
-  if [[ "${name}" != "default"]]; then
+  if [[ "$name" != "default" ]]; then
     echo "Create workspace - $name"
     echo "$workspace" | \
       jq -r 'del(.fullName.orgId, .meta.annotations, .meta.parentReferences)' | \
       tanzu tmc workspace create --file -
   fi
-done
+done <<< "$workspaceList"
