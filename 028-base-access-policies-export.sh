@@ -38,11 +38,12 @@ workspace_scope="$DIR/workspaces"
 mkdir -p $workspace_scope
 
 log info "Exporting rolebindings on workspaces ..."
-workspaces="workspaces/workspaces.yaml"
+workspaces="workspace/data/workspaces.yaml"
 yq '.workspaces[] | [.fullName.name, .meta.uid] | @tsv' $workspaces | \
 while IFS=$'\t' read -r name uid
 do
     workspace_rolebindings="$workspace_scope/$name.json"
+    log info "Exporting rolebindings on workspace $name ..."
     export_rolebindings "$uid" "$workspace_rolebindings"
 done
 
@@ -50,11 +51,12 @@ clustergroup_scope="$DIR/clustergroups"
 mkdir -p $clustergroup_scope
 
 log info "Exporting rolebindings on clustergroups ..."
-clustergroups="clustergroups/clustergroups.yaml"
+clustergroups="clustergroup/data/clustergroups.yaml"
 yq '.clusterGroups[] | [.fullName.name, .meta.uid] | @tsv' $clustergroups | \
 while IFS=$'\t' read -r name uid
 do
     clustegroup_rolebindings="$clustergroup_scope/$name.json"
+    log info "Exporting rolebindings on clustergroup $name ..."
     export_rolebindings "$uid" "$clustegroup_rolebindings"
 done
 
@@ -73,6 +75,7 @@ do
             continue
         fi
         cluster_rolebindings="$cluster_scope/${mgmt}_${prvn}_${name}.json"
+        log info "Exporting rolebindings on cluster /${mgmt}/${prvn}/${name} ..."
         export_rolebindings "$uid" "$cluster_rolebindings"
     done
 done
@@ -81,10 +84,14 @@ namespace_scope="$DIR/namespaces"
 mkdir -p $namespace_scope
 
 log info "Exporting rolebindings on namespaces ..."
-namespaces="namespaces/namespaces.yaml"
-yq '.namespaces[] | [.fullName.managementClusterName, .fullName.provisionerName, .fullName.clusterName, .fullName.name, .meta.uid] | @tsv' $namespaces | \
-while IFS=$'\t' read -r mgmt prvn cls name uid
+namespaces_path="data/cluster-namespaces"
+for namespace in `find $namespaces_path -name '*.yml'`
 do
-    namespace_rolebindings="$namespace_scope/${mgmt}_${prvn}_${cls}_${name}.json"
-    export_rolebindings "$uid" "$namespace_rolebindings"
+    yq '[.fullName.managementClusterName, .fullName.provisionerName, .fullName.clusterName, .fullName.name, .meta.uid] | @tsv' $namespace | \
+    while IFS=$'\t' read -r mgmt prvn cls name uid
+    do
+        namespace_rolebindings="$namespace_scope/${mgmt}_${prvn}_${cls}_${name}.json"
+        log info "Exporting rolebindings on namespace /${mgmt}/${prvn}/${cls}/${name} ..."
+        export_rolebindings "$uid" "$namespace_rolebindings"
+    done
 done

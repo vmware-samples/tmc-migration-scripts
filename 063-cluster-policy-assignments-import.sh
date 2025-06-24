@@ -15,7 +15,7 @@ import_cluster_policies() {
     pushd $policies_temp > /dev/null
         for p_file in $(ls *.yaml)
         do
-            cls_full_name=$(log info "$p_file" | sed 's/.yaml$//g')
+            cls_full_name=$(echo "$p_file" | sed 's/.yaml$//g')
 
             IFS='_' read -r mgmt prvn cls <<< "$cls_full_name"
 
@@ -24,7 +24,7 @@ import_cluster_policies() {
             log info "Importing policy assignment on cluster $mgmt/$prvn/$cls ..." 
             tanzu mission-control policy create -s cluster -f $p_file
         done
-    popd
+    popd > /dev/null
 }
 
 log "************************************************************************"
