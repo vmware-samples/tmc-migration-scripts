@@ -1,18 +1,17 @@
 #!/bin/bash
 # Resource: Settings (Under Administration)
 
-DIR=setting
-DATA_DIR=data
+DATA_DIR=data/setting
 scopes=("cluster" "clustergroup" "organization")
 setting_json_template='{"type":{"kind":"Setting","version":"v1alpha1","package":"vmware.tanzu.manage.v1alpha1.cluster.setting.Setting"},"fullName":{"name":""},"spec":{}}'
 
-if [ ! -d $DIR ]; then
-  echo "Nothing to do without directory $DIR, please backup data first"
+if [ ! -d $DATA_DIR ]; then
+  echo "Nothing to do without directory $DATA_DIR, please backup data first"
   exit 0
 fi
 
 for scope in "${scopes[@]}"; do
-  settingList=$(cat $DIR/$DATA_DIR/$scope/settings.yaml | yq eval -o=json - | jq -c '.effective[]')
+  settingList=$(cat $DATA_DIR/$scope/settings.yaml | yq eval -o=json - | jq -c '.effective[]')
   while IFS= read -r setting; do
     if [[ -z "$setting" ]]; then
       echo "No any $scope level settings"

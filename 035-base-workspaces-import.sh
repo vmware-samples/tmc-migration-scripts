@@ -1,15 +1,14 @@
 #!/bin/bash
 # Resource: Workspace
 
-DIR=workspace
-DATA_DIR=data
+DATA_DIR=data/workspace
 
-if [ ! -d $DIR ]; then
-  echo "Nothing to do without directory $DIR, please backup data first"
+if [ ! -d $DATA_DIR ]; then
+  echo "Nothing to do without directory $DATA_DIR, please backup data first"
   exit 0
 fi
 
-workspaceList=`cat $DIR/$DATA_DIR/workspaces.yaml | yq eval -o=json - | jq '.' | \
+workspaceList=`cat $DATA_DIR/workspaces.yaml | yq eval -o=json - | jq '.' | \
   jq -c '.workspaces[]'`
 
 while IFS= read -r workspace; do

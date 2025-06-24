@@ -1,14 +1,13 @@
 #!/bin/bash
 # Resource: Access (Under Administration)
 
-DIR=credential-access
-DATA_DIR=data
+DATA_DIR=data/credential-access
 
-if [ -d $DIR ]; then
-  rm -rf $DIR/*
+if [ -d $DATA_DIR ]; then
+  rm -rf $DATA_DIR/*
 fi
 
-mkdir -p $DIR/$DATA_DIR
+mkdir -p $DATA_DIR
 
 tmc_curl() {
   tmcInfo=`tanzu context get migration | yq eval -o=json - | jq -c '.'`
@@ -26,5 +25,5 @@ credentialList=`tanzu tmc account credential list -o yaml | \
 
 while IFS= read -r credential; do
  name=$(echo "$credential" | jq -r '.fullName.name // ""')
- tmc_curl ${name} |jq '.' | yq eval -P - > $DIR/$DATA_DIR/access---${name}.yaml
+ tmc_curl ${name} |jq '.' | yq eval -P - > $DATA_DIR/access---${name}.yaml
 done  <<< "$credentialList"

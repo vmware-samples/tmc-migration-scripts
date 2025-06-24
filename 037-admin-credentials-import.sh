@@ -5,22 +5,21 @@
 # The second script will create credential resources on SM based on the template files.
 # run 037-credentials-create-template.sh first and manually fill in the missing field values before run this script.
 
-DIR=credential
-DATA_DIR=data
+DATA_DIR=data/credential
 TEMPLATE_DIR=template
 
-if [ ! -d $DIR ]; then
-  echo "Nothing to do without directory $DIR, please backup data first"
+if [ ! -d $DATA_DIR ]; then
+  echo "Nothing to do without directory $DATA_DIR, please backup data first"
   exit 0
 fi
 
-if [ ! -d $DIR/$TEMPLATE_DIR ]; then
-  echo "Nothing to do without directory $DIR/$TEMPLATE_DIR, please generate template files first"
+if [ ! -d $DATA_DIR/$TEMPLATE_DIR ]; then
+  echo "Nothing to do without directory $DATA_DIR/$TEMPLATE_DIR, please generate template files first"
   echo "Please fill in the missing values in each template file(credential/template/*.yaml) manually."
   exit 0
 fi
 
-for file in "$DIR"/$TEMPLATE_DIR/*; do
+for file in "$DATA_DIR"/$TEMPLATE_DIR/*; do
   if [ -f "$file" ]; then
     echo "Create credential with file $file"
     tanzu tmc account credential create --file $file

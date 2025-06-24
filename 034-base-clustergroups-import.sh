@@ -1,15 +1,14 @@
 #!/bin/bash
 # Resource: Cluster group
 
-DIR=clustergroup
-DATA_DIR=data
+DATA_DIR=data/clustergroup
 
-if [ ! -d $DIR ]; then
-  echo "Nothing to do without directory $DIR, please backup data first"
+if [ ! -d $DATA_DIR ]; then
+  echo "Nothing to do without directory $DATA_DIR, please backup data first"
   exit 0
 fi
 
-clusterGroupList=`cat $DIR/$DATA_DIR/clustergroups.yaml | yq eval -o=json - | jq '.' | \
+clusterGroupList=`cat $DATA_DIR/clustergroups.yaml | yq eval -o=json - | jq '.' | \
   jq -c '.clusterGroups[]'`
 
 while IFS= read -r clusterGroup; do

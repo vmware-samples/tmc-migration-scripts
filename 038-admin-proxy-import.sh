@@ -5,22 +5,21 @@
 # The second script will create proxy resources on SM based on the template files.
 # run 038-proxy-create-template.sh first and manually fill in the missing field values before run this script.
 
-DIR=proxy
-DATA_DIR=data
+DATA_DIR=data/proxy
 TEMPLATE_DIR=template
 
-if [ ! -d $DIR ]; then
-  echo "Nothing to do without directory $DIR, please backup data first"
+if [ ! -d $DATA_DIR ]; then
+  echo "Nothing to do without directory $DATA_DIR, please backup data first"
   exit 0
 fi
 
-if [ ! -d $DIR/$TEMPLATE_DIR ]; then
-  echo "Nothing to do without directory $DIR/$TEMPLATE_DIR, please generate template files with script 038-admin-proxy-create-template.sh"
+if [ ! -d $DATA_DIR/$TEMPLATE_DIR ]; then
+  echo "Nothing to do without directory $DATA_DIR/$TEMPLATE_DIR, please generate template files with script 038-admin-proxy-create-template.sh"
   echo "Please fill in the missing values in each template file(proxy/template/*.yaml) manually."
   exit 0
 fi
 
-for file in "$DIR"/$TEMPLATE_DIR/*; do
+for file in "$DATA_DIR"/$TEMPLATE_DIR/*; do
   if [ -f "$file" ]; then
     echo "Create credential with file $file"
     tanzu tmc account credential create --file $file

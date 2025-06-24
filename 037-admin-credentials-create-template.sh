@@ -6,25 +6,24 @@
 # The first script will generate template files under the folder: credential/template.
 # Then users need to fill in the missing fields such as CA, credentials.
 
-DIR=credential
-DATA_DIR=data
+DATA_DIR=data/credential
 TEMPLATE_DIR=template
 credential_type_json_template='{"type":{"kind":"Credential","version":"v1alpha1","package":"vmware.tanzu.manage.v1alpha1.account.credential.Credential"}}'
 
-if [ ! -d $DIR ]; then
-  echo "Nothing to do without directory $DIR, please backup data first"
+if [ ! -d $DATA_DIR ]; then
+  echo "Nothing to do without directory $DATA_DIR, please backup data first"
   exit 0
 fi
 
-if [ ! -d $DIR/$TEMPLATE_DIR ]; then
-  mkdir -p $DIR/$TEMPLATE_DIR
+if [ ! -d $DATA_DIR/$TEMPLATE_DIR ]; then
+  mkdir -p $DATA_DIR/$TEMPLATE_DIR
 fi
 
 echo "Generate template yaml files for credentials with script 037-admin-credentials-create-template.sh"
 
 # Handle with IMAGE_REGISTRY and PROXY_CONFIG in another script
 # No longer support the AZURE_AKS and AWS_EKS.
-credentialList=`cat "$DIR/$DATA_DIR/credentials.yaml" | \
+credentialList=`cat "$DATA_DIR/credentials.yaml" | \
   yq eval -o=json - | jq '.' | \
   jq 'del(.totalCount)' | \
   jq '.credentials |=map(select(.spec.capability != "IMAGE_REGISTRY" and .spec.capability != "PROXY_CONFIG" and .spec.meta.provider != "AZURE_AKS" and .spec.meta.provider != "AWS_EKS"))' | \
@@ -100,4 +99,4 @@ spec:
 '''
 
 echo "##################################################################"
-echo "You need to go to the dir: credential/template to fill the missing fields for each template file before execute the import script."
+echo "You need to go to the dir: data/credential/template to fill the missing fields for each template file before execute the import script."

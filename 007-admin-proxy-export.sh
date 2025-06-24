@@ -1,16 +1,15 @@
 #!/bin/bash
 # Resource: Proxy Configuration(Under Administration)
 
-DIR=proxy
-DATA_DIR=data
+DATA_DIR=data/proxy
 
-if [ -d $DIR ]; then
-  rm -rf $DIR/*
+if [ -d $DATA_DIR ]; then
+  rm -rf $DATA_DIR/*
 fi
-mkdir -p $DIR/$DATA_DIR
+mkdir -p $DATA_DIR
 
 tanzu tmc account credential list -o yaml | \
   yq eval -o=json - | jq '.' | \
   jq 'del(.totalCount)' | \
   jq '.credentials |=map(select(.spec.capability == "PROXY_CONFIG"))' | \
-  yq eval -P -  > "$DIR/$DATA_DIR/proxies.yaml"
+  yq eval -P -  > "$DATA_DIR/proxies.yaml"

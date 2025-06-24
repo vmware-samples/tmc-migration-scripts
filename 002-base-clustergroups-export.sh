@@ -1,12 +1,11 @@
 #!/bin/bash
 # Resource: Cluster group
 
-DIR=clustergroup
-DATA_DIR=data
+DATA_DIR=data/clustergroup
 
-if [ -d $DIR ]; then
-  rm -rf $DIR/*
+if [ -d $DATA_DIR ]; then
+  rm -rf $DATA_DIR/*
 fi
-mkdir -p $DIR/$DATA_DIR
+mkdir -p $DATA_DIR
 
-tanzu tmc clustergroup list -o yaml > "$DIR/$DATA_DIR/clustergroups.yaml"
+tanzu tmc clustergroup list -o yaml > "$DATA_DIR/clustergroups.yaml"

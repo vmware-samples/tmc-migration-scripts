@@ -1,13 +1,12 @@
 #!/bin/bash
 # Resource: Credential(Accounts) (Under Administration)
 
-DIR=credential
-DATA_DIR=data
+DATA_DIR=data/credential
 
-if [ -d $DIR ]; then
-  rm -rf $DIR/*
+if [ -d $DATA_DIR ]; then
+  rm -rf $DATA_DIR/*
 fi
 
-mkdir -p $DIR/$DATA_DIR
+mkdir -p $DATA_DIR
 
-tanzu tmc account credential list -o yaml > "$DIR/$DATA_DIR/credentials.yaml"
+tanzu tmc account credential list -o yaml > "$DATA_DIR/credentials.yaml"

@@ -1,17 +1,16 @@
 #!/bin/bash
 # Resource: Role (Under Administration)
 
-DIR=role
-DATA_DIR=data
+DATA_DIR=data/role
 
-if [ ! -d $DIR ]; then
-  echo "Nothing to do without directory $DIR, please backup data first"
+if [ ! -d $DATA_DIR ]; then
+  echo "Nothing to do without directory $DATA_DIR, please backup data first"
   exit 0
 fi
 
 role_type_json_template='{"type":{"kind":"Role","version":"v1alpha1","package":"vmware.tanzu.manage.v1alpha1.iam.role.Role"}}'
 
-roleList=$(cat $DIR/$DATA_DIR/roles.yaml | yq eval -o=json - | jq -c '.roles[]')
+roleList=$(cat $DATA_DIR/roles.yaml | yq eval -o=json - | jq -c '.roles[]')
 
 while IFS= read -r role; do
   if [[ -z "$role" ]]; then
