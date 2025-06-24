@@ -18,6 +18,7 @@ find . -type f -name '*.yml' | while read -r file; do
       MGMT_CLUSTER_NAME=`yq '.fullName.managementClusterName' $file`
       PROVISIONER_NAME=`yq '.fullName.provisionerName' $file`
       tanzu tmc continuousdelivery enable -s cluster -m $MGMT_CLUSTER_NAME -p $PROVISIONER_NAME -c $CLUSTER_NAME
+      mark_success "Cluster" "Import" $file
     fi
   fi
 done

@@ -34,6 +34,7 @@ init () {
 
     mkdir -p $DIR
     if [ "$#" -ge 2 ]; then
+        log debug "Cleanup directory $DIR"
         rm -rf $DIR/*
     fi
 
@@ -60,4 +61,40 @@ check_onboarded_cluster_for_yaml () {
     local CLUSTER_NAME=`yq .fullName.clusterName $file`
     check_onboarded_cluster $MGMT_CLUSTER_NAME $PROVISIONER_NAME $CLUSTER_NAME
     return $?
+}
+
+mark_success () {
+    local owner=$1
+    local action=$2
+    local file=$3
+
+    if [[ "$owner" == "Cluster" ]]; then
+        local MGMT_CLUSTER_NAME=`yq .fullName.managementClusterName $file`
+        local PROVISIONER_NAME=`yq .fullName.provisionerName $file`
+        local CLUSTER_NAME=`yq .fullName.clusterName $file`
+        local NAME=`yq '.fullName.name // ""' $file`
+        local RESOURCE=`yq '.type.kind | downcase' $file`
+        if [[ -n "$NAME" ]]; then
+            RESOURCE="${RESOURCE} '${NAME}'"
+        fi
+        log info "${action} ${RESOURCE} to cluster '${MGMT_CLUSTER_NAME}:${PROVISIONER_NAME}${CLUSTER_NAME}' successfully"
+    fi
+}
+
+tanzu () {
+    set +e
+    command tanzu "$@" &> tanzu-output.txt
+    local EXIT=$?
+    if [[ -n "$IGNORE_TANZU_ERROR" ]]; then
+        if grep "$IGNORE_TANZU_ERROR" tanzu-output.txt &> /dev/null; then
+            log debug "Ignore tanzu error [$(cat tanzu-output.txt)]"
+            EXIT=0
+        fi
+    fi
+    set -e
+    if [ $EXIT -ne 0 ]; then
+        cat tanzu-output.txt
+    fi
+    rm -rf tanzu-output.txt
+    return $EXIT
 }
