@@ -14,10 +14,15 @@ role_type_json_template='{"type":{"kind":"Role","version":"v1alpha1","package":"
 roleList=$(cat $DIR/$DATA_DIR/roles.yaml | yq eval -o=json - | jq -c '.roles[]')
 
 while IFS= read -r role; do
-  name=$(echo "$role" | jq -r '.fullName.name // ""')
-  echo "Create role $name"
-  echo "$role" | \
-    jq 'del(.fullName.orgId, .meta.parentReferences, .type)' | \
-    jq --argjson typeJson "$role_type_json_template" '. += $typeJson'  | \
-    tanzu tmc iam role create --file -
+  if [[ -z "$role" ]]; then
+    echo "No any customized role found"
+  fi
+  if [[ -n "$role" ]]; then
+    name=$(echo "$role" | jq -r '.fullName.name // ""')
+    echo "Create role $name"
+    echo "$role" | \
+      jq 'del(.fullName.orgId, .meta.parentReferences, .type)' | \
+      jq --argjson typeJson "$role_type_json_template" '. += $typeJson'  | \
+      tanzu tmc iam role create --file -
+  fi
 done <<< "$roleList"

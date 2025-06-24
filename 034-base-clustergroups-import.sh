@@ -12,14 +12,17 @@ fi
 clusterGroupList=`cat $DIR/$DATA_DIR/clustergroups.yaml | yq eval -o=json - | jq '.' | \
   jq -c '.clusterGroups[]'`
 
-echo $clusterGroupList
-
 while IFS= read -r clusterGroup; do
-  name=$(echo "$clusterGroup" | jq -r ".fullName.name")
-  if [[ "$name" != "default" ]]; then
-    echo "Create clustergroup: $name"
-    echo "$clusterGroup" | \
-      jq -r 'del(.fullName.orgId, .meta.annotations, .meta.parentReferences)' | \
-      tanzu tmc clustergroup create --file -
+  if [[ -z "$clusterGroup" ]]; then
+    echo "No any clustergroup found"
+  fi
+  if [[ -n "$clusterGroup" ]]; then
+    name=$(echo "$clusterGroup" | jq -r ".fullName.name")
+    if [[ "$name" != "default" ]]; then
+      echo "Create clustergroup: $name"
+      echo "$clusterGroup" | \
+        jq -r 'del(.fullName.orgId, .meta.annotations, .meta.parentReferences)' | \
+        tanzu tmc clustergroup create --file -
+    fi
   fi
 done <<< "$clusterGroupList"
