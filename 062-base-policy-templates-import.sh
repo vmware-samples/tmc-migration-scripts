@@ -25,6 +25,10 @@ do
     yq e ".templates[$i].spec.object" $src_templates > $object_file
     description=$(yq e ".templates[$i].meta.description" $src_templates)
     inventory=$(yq e ".templates[$i].spec.dataInventory[]|[.group, .kind, .version]|@csv" $src_templates | sed 's/,/\//g' | sed ':a; N; $!ba; s/\n/,/g')
-
-    tanzu tmc policy policy-template  create --object-file $object_file --description "$description" --data-inventory $inventory
+    data_inventory=""
+    if [ -n "$inventory" ]; then
+        data_inventory="--data-inventory $inventory"
+    fi
+    log info "Importing policy template ${name} ..."
+    tanzu tmc policy policy-template  create --object-file $object_file --description "$description" $data_inventory
 done
