@@ -18,25 +18,42 @@ function prepare() {
     for ns in $namespaces; do
         echo "Checking namespace: $ns"
 
-        # Check and delete AgentInstall if exists
-        if kubectl get agentinstall -n "$ns" &>/dev/null; then
-            echo "🧹 Deleting AgentInstall(s) in $ns..."
-            kubectl delete agentinstall --all -n "$ns"
-        else
-            echo "No AgentInstall in $ns"
-        fi
+        # Delete the agentinstall if it exists.
+        delete_agent_installs "$ns"
+        # Uninstall the pre-installation.
+        uninstall_stale_res "$ns"
+        # Clean the uninstall operation resource.
+        delete_agent_installs "$ns"
 
-        # Check and delete AgentConfig if exists
-        if kubectl get agentconfig -n "$ns" &>/dev/null; then
-            echo "Deleting AgentConfig(s) in $ns..."
-            kubectl delete agentconfig --all -n "$ns"
-        else
-            echo "No AgentConfig in $ns"
-        fi
-
+        # Delete the agent config it exists.
+        delete_agent_config "$ns"
         # Create agent config.
-        create_agent_config $ns
+        create_agent_config "$ns"
     done
+}
+
+function delete_agent_config() {
+    local ns="$1"
+
+    # Check and delete AgentConfig if exists
+    if kubectl get agentconfig -n "$ns" &>/dev/null; then
+        echo "Deleting AgentConfig(s) in $ns..."
+        kubectl delete agentconfig --all -n "$ns"
+    else
+        echo "No AgentConfig in $ns"
+    fi
+}
+
+function delete_agent_installs(){
+    local ns="$1"
+
+    # Check and delete AgentInstall if exists
+    if kubectl get agentinstall -n "$ns" &>/dev/null; then
+        echo "🧹 Deleting AgentInstall(s) in $ns..."
+        kubectl delete agentinstall --all -n "$ns"
+    else
+        echo "No AgentInstall in $ns"
+    fi
 }
 
 function create_agent_config() {
@@ -58,7 +75,56 @@ $(echo "$CA_CERTIFICATE" | sed 's/^/    /')
   allowedHostNames:
     - $DOMAIN
 EOF
+}
 
+function uninstall_stale_res() {
+    local namespace="$1"
+
+    echo "Apply uninstall operation"
+
+    cat <<EOF | kubectl apply -f -
+apiVersion: installers.tmc.cloud.vmware.com/v1alpha1
+kind: AgentInstall
+metadata:
+  name: tmc-agent-installer-config
+  namespace: "$namespace"
+spec:
+  operation: UNINSTALL
+EOF
+
+wait_for_pods_cleaned $namespace
+}
+
+function wait_for_pods_cleaned() {
+    local namespace="$1"
+
+    TIMEOUT_SECONDS=300  # 5 minutes
+    SLEEP_INTERVAL=5
+
+    echo "Waiting for all pods in namespace '$namespace' to terminate..."
+
+    elapsed=0
+    while true; do
+        # Get number of pods
+        pod_count=$(kubectl get pods -n "$namespace" --no-headers 2>/dev/null | grep -v '^tmc-agent-installer-' | wc -l)
+
+        # If no pods, break the loop
+        if [[ "$pod_count" -eq 0 ]]; then
+            echo "All pods in namespace '$namespace' are gone."
+            break
+        fi
+
+        if [[ "$elapsed" -ge "$TIMEOUT_SECONDS" ]]; then
+            echo "Timeout reached. Still $pod_count pod(s) remaining in namespace '$NAMESPACE'."
+            exit 1
+        fi
+
+        echo "$pod_count pod(s) remaining... waited ${elapsed}s"
+
+        sleep "$SLEEP_INTERVAL"
+        ((elapsed+=SLEEP_INTERVAL))
+
+    done
 }
 
 
