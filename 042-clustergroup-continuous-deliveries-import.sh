@@ -11,5 +11,6 @@ find . -type f -name '*.yml' | while read -r file; do
   if [ $PHASE == "APPLIED" ]; then
     GROUP_NAME=`yq '.fullName.clusterGroupName' $file`
     tanzu tmc continuousdelivery enable -s clustergroup -g $GROUP_NAME
+    mark_success "ClusterGroup" "Import" $file
   fi
 done
