@@ -52,5 +52,5 @@ generate_policy_spec() {
            yq e -n ".fullName.name = \"$policy_name\" | .spec = load(\"$src_policies\").effective[$i].spec.policySpec" -o yaml > $policy
        done
    done
-   popd
+   popd > /dev/null
 }

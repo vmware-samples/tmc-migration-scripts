@@ -1,5 +1,6 @@
 #! /bin/bash
 
+source utils/common.sh
 source utils/policy-helper.sh
 
 TEMP_DIR=$(mktemp -d)
@@ -18,6 +19,11 @@ import_cluster_policies() {
             cls_full_name=$(echo "$p_file" | sed 's/.yaml$//g')
 
             IFS='_' read -r mgmt prvn cls <<< "$cls_full_name"
+
+            if ! check_onboarded_cluster $mgmt $prvn $cls; then
+                log info "[SKIP] undesired cluster $mgmt/$prvn/$name"
+                continue
+            fi
 
             yq e -i ".fullName.managementClusterName = \"$mgmt\" | .fullName.provisionerName = \"$prvn\" | .fullName.clusterName = \"$cls\"" $p_file
 

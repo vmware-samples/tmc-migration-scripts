@@ -16,6 +16,7 @@ import_org_policies() {
         yq '.policies[]' -s '.fullName.name' $script_path/$SRC_DIR/$scope/policies.yaml
         for p_file in $(ls *.yml)
         do
+            yq -i 'del(.fullName.orgId)' $p_file
             tanzu mission-control policy create -s organization -f $p_file
         done
     popd > /dev/null

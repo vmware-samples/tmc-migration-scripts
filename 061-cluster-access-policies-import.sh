@@ -29,7 +29,7 @@ import_cluster_rolebindings() {
         jq '.effective[] | select(.spec.inherited != true).spec.policySpec' $resource_full_name.json > $rolebindings
 
         IFS='_' read -r mgmt prvn name <<< "$resource_full_name"
-        if check_onboarded_cluster $mgmt $prvn $name; then
+        if ! check_onboarded_cluster $mgmt $prvn $name; then
             log info "[SKIP] undesired cluster $mgmt/$prvn/$name"
             continue
         fi
