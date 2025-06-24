@@ -8,7 +8,7 @@
 export TMC_CONTEXT=migration
 
 # For production.
-tanzu context create ${TMC_CONTEXT} --type tmc --endpoint $ORG_NAME.tmc.tanzu.broadcom.com:443
+#tanzu context create ${TMC_CONTEXT} --type tmc --endpoint $ORG_NAME.tmc.tanzu.broadcom.com:443
 
 # For experiments.
 tanzu context create ${TMC_CONTEXT} --type tmc --staging --endpoint $ORG_NAME.tmc-dev.tanzu.broadcom.com:443
