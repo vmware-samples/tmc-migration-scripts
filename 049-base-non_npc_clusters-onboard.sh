@@ -2,7 +2,7 @@
 
 INPUT_CLUSTERS_FILE=clusters/attached_non_npc_clusters.yaml
 WC_KUBECONFIG_INDEX_FILE=clusters/attached-wc-kubeconfig-index-file
-PLACEHOLDER_TEXT="/path/to/the/real/mc_kubeconfig/file"
+PLACEHOLDER_TEXT="/path/to/the/real/wc_kubeconfig/file"
 
 # If the $MC_KUBECONFIG_INDEX_FILE file is NOT completely updated, then stop to proceed.
 if grep -q "$PLACEHOLDER_TEXT" "$WC_KUBECONFIG_INDEX_FILE"; then
