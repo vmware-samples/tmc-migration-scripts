@@ -79,22 +79,46 @@ mark_success () {
         fi
         log info "${action} ${RESOURCE} to cluster '${MGMT_CLUSTER_NAME}:${PROVISIONER_NAME}${CLUSTER_NAME}' successfully"
     fi
+    if [[ "$owner" == "ClusterGroup" ]]; then
+        local CG_NAME=`yq .fullName.clusterGroupName $file`
+        local NAME=`yq '.fullName.name // ""' $file`
+        local NAMESPACE=`yq '.fullName.namespaceName // ""' $file`
+        local RESOURCE=`yq '.type.kind | downcase' $file`
+
+        if [[ -n "$NAME" ]]; then
+            RESOURCE="${RESOURCE} '${NAME}'"
+        fi
+
+        if [[ -n "$NAMESPACE" ]]; then
+            log info "${action} ${RESOURCE} in namespace '${NAMESPACE}' to cluster group '${CG_NAME}' successfully"
+        else
+            log info "${action} ${RESOURCE} to cluster group '${CG_NAME}' successfully"
+        fi
+    fi
 }
 
 tanzu () {
-    set +e
-    command tanzu "$@" &> tanzu-output.txt
-    local EXIT=$?
+    log debug "tanzu $@" 1>&2
     if [[ -n "$IGNORE_TANZU_ERROR" ]]; then
+        set +e
+        command tanzu "$@" &> tanzu-output.txt
+        local EXIT=$?
         if grep "$IGNORE_TANZU_ERROR" tanzu-output.txt &> /dev/null; then
             log debug "Ignore tanzu error [$(cat tanzu-output.txt)]"
             EXIT=0
         fi
+        set -e
+        if [ $EXIT -ne 0 ]; then
+            cat tanzu-output.txt
+        fi
+        rm -rf tanzu-output.txt
+        return $EXIT
+    else
+        command tanzu "$@"
     fi
-    set -e
-    if [ $EXIT -ne 0 ]; then
-        cat tanzu-output.txt
-    fi
-    rm -rf tanzu-output.txt
-    return $EXIT
+}
+
+yq () {
+    log debug "yq $@" 1>&2
+    command yq "$@"
 }
