@@ -1,7 +1,7 @@
 #!/bin/bash
 # Resource: Settings (Under Administration)
 
-SCRIPT_DIR=$(dirname "$0")
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 DATA_DIR="$SCRIPT_DIR"/data/setting
 scopes=("cluster" "clustergroup" "organization")
 setting_json_template='{"type":{"kind":"Setting","version":"v1alpha1","package":"vmware.tanzu.manage.v1alpha1.cluster.setting.Setting"},"fullName":{"name":""},"spec":{}}'

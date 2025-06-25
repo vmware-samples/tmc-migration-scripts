@@ -5,7 +5,7 @@
 # The second script will create proxy resources on SM based on the template files.
 # run 039-image-registry-create-template.sh first and manually fill in the missing field values before run this script.
 
-SCRIPT_DIR=$(dirname "$0")
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 DATA_DIR="$SCRIPT_DIR"/data/image-registry
 TEMPLATE_DIR=template
 

@@ -5,7 +5,7 @@
 # The second script will create credential resources on SM based on the template files.
 # run 037-credentials-create-template.sh first and manually fill in the missing field values before run this script.
 
-SCRIPT_DIR=$(dirname "$0")
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 DATA_DIR="$SCRIPT_DIR"/data/credential
 TEMPLATE_DIR=template
 

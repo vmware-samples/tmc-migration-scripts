@@ -1,7 +1,7 @@
 #!/bin/bash
 # Resource: Cluster group
 
-SCRIPT_DIR=$(dirname "$0")
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 DATA_DIR="$SCRIPT_DIR"/data/clustergroup
 
 if [ ! -d $DATA_DIR ]; then
