@@ -12,9 +12,9 @@ fi
 
 
 # Attach non-NPC clusters.
-ONBOARDED_CLUSTER_INDEX_FILE="clusters/onboarded-clusters-name-index"
+ONBOARDED_CLUSTER_INDEX_FILE="data/clusters/onboarded-clusters-name-index"
 
-ATTACHED_CLUSTER_DIR=clusters/attached
+ATTACHED_CLUSTER_DIR=data/clusters/attached
 mkdir -p $ATTACHED_CLUSTER_DIR
 
 # Iterate through clusters
@@ -33,7 +33,7 @@ while [ "$index" -lt "$total" ]; do
     # Save cluster data without .status field.
     yq "del(.clusters[$index].status) | .clusters[$index]" $INPUT_CLUSTERS_FILE > "$file"
     # Remove orgId.
-    yq -i '(.clusters[$index] | .fullName) |= del(.orgId)' $file
+    yq -i 'del(.fullName.orgId)' $file
 
     # Look up the kubeconfig file path from the provided index file
     KUBECONFIG_PATH=$(grep "^$name:" "$WC_KUBECONFIG_INDEX_FILE" | awk '{print $2}')
