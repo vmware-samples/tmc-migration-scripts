@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MC_LIST_FOLDER=clusters
+MC_LIST_FOLDER=data/clusters
 MC_LIST_FILE=$MC_LIST_FOLDER/mc_list.yaml
 
 # Define the management cluster filter. e.g. "my_mc_1, my_mc_2".
@@ -43,6 +43,9 @@ for name in $MATCHED_MC; do
     done
 
     # Deregister the management cluster.
+    echo "Wait for 1m to ensure all the workload clusters are unmanaged from management cluster $name before deregister it"
+    sleep 60
+
     echo "Deregister management cluster $name"
     tanzu tmc mc deregister "$name"
 done

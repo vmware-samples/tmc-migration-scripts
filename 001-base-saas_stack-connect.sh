@@ -21,8 +21,8 @@ tanzu context create ${TMC_CONTEXT} --type tmc --staging --endpoint $ORG_NAME.tm
 
 ## Alternative option:
 ## Exchange the access token.
-export TOKEN_URL=https://console.tanzu.broadcom.com/csp/gateway/am/api/auth/api-tokens/authorize
-export REFRESH_TOKEN=<CSP Token>
+#export TOKEN_URL=https://console.tanzu.broadcom.com/csp/gateway/am/api/auth/api-tokens/authorize
+#export REFRESH_TOKEN=<CSP Token>
 
 export TMC_ACCESS_TOKEN="$(curl -X POST $TOKEN_URL \
   -H 'Content-Type: application/x-www-form-urlencoded' \
