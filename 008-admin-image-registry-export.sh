@@ -1,7 +1,8 @@
 #!/bin/bash
 # Resource: Local Image Registry (Under Administration)
 
-DATA_DIR=data/image-registry
+SCRIPT_DIR=$(dirname "$0")
+DATA_DIR="$SCRIPT_DIR"/data/image-registry
 
 if [ -d $DATA_DIR ]; then
   rm -rf $DATA_DIR/*

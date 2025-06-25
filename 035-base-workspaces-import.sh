@@ -1,7 +1,8 @@
 #!/bin/bash
 # Resource: Workspace
 
-DATA_DIR=data/workspace
+SCRIPT_DIR=$(dirname "$0")
+DATA_DIR="$SCRIPT_DIR"/data/workspace
 
 if [ ! -d $DATA_DIR ]; then
   echo "Nothing to do without directory $DATA_DIR, please backup data first"

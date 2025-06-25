@@ -1,7 +1,8 @@
 #!/bin/bash
 # Resource: Cluster group
 
-DATA_DIR=data/clustergroup
+SCRIPT_DIR=$(dirname "$0")
+DATA_DIR="$SCRIPT_DIR"/data/clustergroup
 
 if [ ! -d $DATA_DIR ]; then
   echo "Nothing to do without directory $DATA_DIR, please backup data first"

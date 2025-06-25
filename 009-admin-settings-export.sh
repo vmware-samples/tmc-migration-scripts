@@ -1,7 +1,8 @@
 #!/bin/bash
 # Resource: Settings (Under Administration)
 
-DATA_DIR=data/setting
+SCRIPT_DIR=$(dirname "$0")
+DATA_DIR="$SCRIPT_DIR"/data/setting
 scopes=("cluster" "clustergroup" "organization")
 
 if [ -d $DATA_DIR ]; then

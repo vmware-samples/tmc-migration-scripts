@@ -1,7 +1,8 @@
 #!/bin/bash
 # Resource: Credential(Accounts) (Under Administration)
 
-DATA_DIR=data/credential
+SCRIPT_DIR=$(dirname "$0")
+DATA_DIR="$SCRIPT_DIR"/data/credential
 
 if [ -d $DATA_DIR ]; then
   rm -rf $DATA_DIR/*

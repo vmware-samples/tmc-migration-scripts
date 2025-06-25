@@ -1,7 +1,8 @@
 #!/bin/bash
 # Resource: Proxy Configuration(Under Administration)
 
-DATA_DIR=data/proxy
+SCRIPT_DIR=$(dirname "$0")
+DATA_DIR="$SCRIPT_DIR"/data/proxy
 
 if [ -d $DATA_DIR ]; then
   rm -rf $DATA_DIR/*
