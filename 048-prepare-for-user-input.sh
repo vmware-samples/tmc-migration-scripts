@@ -1,9 +1,11 @@
 #!/bin/bash
 
-MC_LIST_YAML_FILE=clusters/mc_list.yaml
-MC_KUBECONFIG_INDEX_FILE=clusters/mc-kubeconfig-index-file
+MC_LIST_YAML_FILE=data/clusters/mc_list.yaml
+MC_KUBECONFIG_INDEX_FILE=data/clusters/mc-kubeconfig-index-file
 
 PLACEHOLDER_TEXT="/path/to/the/real/mc_kubeconfig/file"
+
+rm -f $MC_KUBECONFIG_INDEX_FILE
 
 # Iterate through clusters
 index=0

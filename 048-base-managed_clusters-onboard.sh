@@ -1,8 +1,8 @@
 #!/bin/bash
 
-MC_LIST_YAML_FILE=clusters/mc_list.yaml
-MC_KUBECONFIG_INDEX_FILE=clusters/mc-kubeconfig-index-file
-REGISTERED_FILE="clusters/mc_registered.txt"
+MC_LIST_YAML_FILE=data/clusters/mc_list.yaml
+MC_KUBECONFIG_INDEX_FILE=data/clusters/mc-kubeconfig-index-file
+REGISTERED_FILE="data/clusters/mc_registered.txt"
 PLACEHOLDER_TEXT="/path/to/the/real/mc_kubeconfig/file"
 
 # If the $MC_KUBECONFIG_INDEX_FILE file is NOT completely updated, then stop to proceed.

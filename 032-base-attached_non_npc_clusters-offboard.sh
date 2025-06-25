@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MC_LIST_FOLDER=clusters
+MC_LIST_FOLDER=data/clusters
 ATTACHED_CLUSTER_LIST_FILE=$MC_LIST_FOLDER/attached_non_npc_clusters.yaml
 
 # Define cluster name filter.
