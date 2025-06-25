@@ -10,4 +10,10 @@ fi
 
 mkdir -p $DATA_DIR
 
+echo "************************************************************************"
+echo "* Exporting Credentials from TMC SaaS ..."
+echo "************************************************************************"
+
 tanzu tmc account credential list -o yaml > "$DATA_DIR/credentials.yaml"
+
+echo "Exported Credentials from TMC SaaS"

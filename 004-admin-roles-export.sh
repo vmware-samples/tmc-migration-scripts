@@ -11,8 +11,14 @@ fi
 
 mkdir -p $DATA_DIR
 
+echo "************************************************************************"
+echo "* Exporting Customized Roles from TMC SaaS ..."
+echo "************************************************************************"
+
 tanzu tmc iam role list -o yaml | \
   yq eval -o=json - | jq '.' | \
   jq 'del(.totalCount)' | \
   jq '.roles |=map(select(.spec.isInbuilt == false))' | \
   yq eval -P -  > "$DATA_DIR/roles.yaml"
+
+echo "Exported Customized Roles from TMC SaaS"

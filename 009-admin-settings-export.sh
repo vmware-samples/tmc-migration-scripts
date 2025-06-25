@@ -11,6 +11,10 @@ fi
 
 mkdir -p $DATA_DIR
 
+echo "************************************************************************"
+echo "* Exporting Admin Settings from TMC SaaS ..."
+echo "************************************************************************"
+
 for scope in "${scopes[@]}"; do
   mkdir -p $DATA_DIR/$scope
   tanzu tmc setting list --scope $scope -o yaml | \
@@ -19,3 +23,5 @@ for scope in "${scopes[@]}"; do
     jq '.effective |=map(select(.spec.inherited == false))' | \
     yq eval -P -  > "$DATA_DIR/$scope/settings.yaml"
 done
+
+echo "Exported Admin Settings from TMC SaaS"

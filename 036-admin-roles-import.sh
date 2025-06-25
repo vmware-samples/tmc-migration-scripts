@@ -9,6 +9,10 @@ if [ ! -d $DATA_DIR ]; then
   exit 0
 fi
 
+echo "************************************************************************"
+echo "* Importing Customized Roles into TMC SM ..."
+echo "************************************************************************"
+
 role_type_json_template='{"type":{"kind":"Role","version":"v1alpha1","package":"vmware.tanzu.manage.v1alpha1.iam.role.Role"}}'
 
 roleList=$(cat $DATA_DIR/roles.yaml | yq eval -o=json - | jq -c '.roles[]')
@@ -26,3 +30,5 @@ while IFS= read -r role; do
       tanzu tmc iam role create --file -
   fi
 done <<< "$roleList"
+
+echo "Imported Customized Roles into TMC SM ..."
