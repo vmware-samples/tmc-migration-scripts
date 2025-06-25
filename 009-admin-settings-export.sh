@@ -24,4 +24,5 @@ for scope in "${scopes[@]}"; do
     yq eval -P -  > "$DATA_DIR/$scope/settings.yaml"
 done
 
-echo "Exported Admin Settings from TMC SaaS"
+relative_path="${DATA_DIR#*migration-scripts/}"
+echo "Exported Admin Settings from TMC SaaS: $relative_path/*.yaml"

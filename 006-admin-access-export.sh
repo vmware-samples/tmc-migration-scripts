@@ -27,4 +27,5 @@ while IFS= read -r credential; do
   curl_api_call -X GET "v1alpha1/account/credentials:iam/${name}" |jq '.' | yq eval -P - > $DATA_DIR/access---${name}.yaml
 done  <<< "$credentialList"
 
-echo "Exported Admin Access from TMC SaaS"
+relative_path="${DATA_DIR#*migration-scripts/}"
+echo "Exported Admin Access from TMC SaaS: $relative_path/*.yaml"

@@ -21,4 +21,5 @@ tanzu tmc iam role list -o yaml | \
   jq '.roles |=map(select(.spec.isInbuilt == false))' | \
   yq eval -P -  > "$DATA_DIR/roles.yaml"
 
-echo "Exported Customized Roles from TMC SaaS"
+relative_path="${DATA_DIR#*migration-scripts/}"
+echo "Exported Customized Roles from TMC SaaS: $relative_path/*.yaml"
