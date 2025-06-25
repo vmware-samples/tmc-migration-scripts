@@ -34,7 +34,7 @@ log() {
             ;;
         debug)
             if [ $DEBUG != "off" ]; then
-                echo -e "$timestamp ${COLOR_DEBUG}DEBUG $message${COLOR_RESET}"
+                echo -e "$timestamp ${COLOR_DEBUG}DEBUG $message${COLOR_RESET}" 1>&2
             fi
             ;;
         *)

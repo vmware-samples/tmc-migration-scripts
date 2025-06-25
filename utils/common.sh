@@ -1,8 +1,9 @@
 #!/bin/bash
 
-SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
+source $(dirname "${BASH_SOURCE[0]}")/log.sh
 
-source $SCRIPT_DIR/log.sh
+SCRIPT_DIR="$(dirname "$(readlink -f $0)")"
+SCRIPT_FILE="$(basename "$0")"
 
 pushd () {
     command pushd "$@" > /dev/null
@@ -21,29 +22,31 @@ on_exit() {
     popd
 }
 
-init () {
-    local msg=$1
-
-    local SCRIPT_DIR="$( cd "$( dirname "$0" )" &> /dev/null && pwd )"
-    local SCRIPT_FILE=$(basename "$0")
-
-    log info "$msg ..."
-
+data_dir () {
     local N=`echo ${SCRIPT_FILE%.sh} | awk -F- '{print NF-1}'`
     local DIR=$SCRIPT_DIR/data/`echo ${SCRIPT_FILE%.sh} | cut -d - -f 2-$N`
-
     mkdir -p $DIR
+    echo $DIR
+}
+
+init () {
+    local msg=$1
+    log info "$msg ..."
+    log debug "Script $0 directory is $SCRIPT_DIR"
+
+    local DATA_DIR=$(data_dir)
+
     if [ "$#" -ge 2 ]; then
-        log debug "Cleanup directory $DIR"
-        rm -rf $DIR/*
+        log debug "Cleanup directory $DATA_DIR"
+        rm -rf $DATA_DIR/*
     fi
 
-    pushd $DIR
+    pushd $DATA_DIR
 
     trap "on_exit $msg" EXIT
 }
 
-ONBOARDED_CLUSTER_INDEX_FILE="$SCRIPT_DIR/../clusters/onboarded-clusters-name-index"
+ONBOARDED_CLUSTER_INDEX_FILE="$(dirname "${BASH_SOURCE[0]}")/../clusters/onboarded-clusters-name-index"
 
 check_onboarded_cluster () {
     local onboarded=1
@@ -98,7 +101,7 @@ mark_success () {
 }
 
 tanzu () {
-    log debug "tanzu $@" 1>&2
+    log debug "tanzu $@"
     if [[ -n "$IGNORE_TANZU_ERROR" ]]; then
         set +e
         command tanzu "$@" &> tanzu-output.txt
@@ -119,6 +122,6 @@ tanzu () {
 }
 
 yq () {
-    log debug "yq $@" 1>&2
+    log debug "yq $@"
     command yq "$@"
 }
