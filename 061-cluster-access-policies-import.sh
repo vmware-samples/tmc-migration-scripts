@@ -3,11 +3,9 @@
 source utils/common.sh
 source utils/policy-helper.sh
 
-TEMP_DIR=$(mktemp -d)
-SRC_DIR="policies/iam"
-
-ONBOARDED_CLUSTER_INDEX_FILE="clusters/onboarded-clusters-name-index"
-
+DATA_DIR="data"
+SRC_DIR="$DATA_DIR/policies/iam"
+TEMP_DIR="$SRC_DIR/$(date +%s)"
 
 import_cluster_rolebindings() {
     scope="clusters"
@@ -39,8 +37,42 @@ import_cluster_rolebindings() {
     popd > /dev/null
 }
 
+import_namespace_rolebindings() {
+    scope="namespaces"
+
+    namespace_temp="$TEMP_DIR/$scope"
+    mkdir -p $namespace_temp
+
+    pushd $SRC_DIR/$scope > /dev/null
+    ls *.json | sed 's/.json$//'\ | \
+    while read -r resource_full_name
+    do
+        rolebindings="$namespace_temp/$resource_full_name.json"
+        direct_effectives=$(jq '.effective[] | select(.spec.inherited != true)' $resource_full_name.json)
+        if [ -z "$direct_effectives" ]; then
+            log info "[SKIP] no direct rolebinding for $scope:$resource_full_name is required to imported"
+            continue
+        fi
+
+        jq '.effective[] | select(.spec.inherited != true).spec.policySpec' $resource_full_name.json > $rolebindings
+
+        IFS='_' read -r mgmt prvn cls name <<< "$resource_full_name"
+        if ! grep "$mgmt.$prvn.$cls" $ONBOARDED_CLUSTER_INDEX_FILE; then
+            log info "[SKIP] undesired namespace $mgmt/$prvn/$cls/$name"
+            continue
+        fi
+
+        import_rolebindings "$rolebindings" "clusters/$cls/$scope" "$name" "fullName.managementClusterName=$mgmt&fullName.provisionerName=$prvn"
+    done
+    popd > /dev/null
+}
+
 log "************************************************************************"
 log "* Import Policy Access on Clusters to TMC SM ..."
 log "************************************************************************"
 
+log info "Importing rolebindings on clusters ..."
 import_cluster_rolebindings
+
+log info "Importing rolebindings on namespaces ..."
+import_namespace_rolebindings

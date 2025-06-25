@@ -6,7 +6,8 @@ log "************************************************************************"
 log "* Exporting Policy Templates from TMC SaaS ..."
 log "************************************************************************"
 
-DIR="policies/templates"
+DATA_DIR="data"
+DIR="$DATA_DIR/templates"
 mkdir -p $DIR
 
 log info "Exporting policy templates ..."

@@ -2,10 +2,7 @@
 set +x
 
 source utils/log.sh
-
-# This script depends on below environment variables
-# export TMC_ENDPOINT=""
-# export TMC_ACCESS_TOKEN=""
+source utils/saas-api-call.sh
 
 export_org_rolebindings() {
     role_bindings=$1
@@ -15,15 +12,22 @@ export_org_rolebindings() {
 export_rolebindings() {
     uid=$1
     role_bindings=$2
-    url="$TMC_ENDPOINT/v1alpha1/iam/effective?searchScope.targetResourceUid=$uid"
-    curl --fail -H "Authorization: Bearer $TMC_ACCESS_TOKEN" -X GET $url | jq '.' > $role_bindings
+    url="v1alpha1/iam/effective?searchScope.targetResourceUid=$uid"
+
+    outputs=$(curl_api_call -X GET "$url")
+    if [ $? -ne 0 ]; then
+        log error "Failed to call api $url"
+    fi
+
+    echo "$outputs" | jq '.' > $role_bindings
 }
 
 log "************************************************************************"
 log "* Exporting Access Policies from TMC SaaS ..."
 log "************************************************************************"
 
-DIR="policies/iam"
+DATA_DIR="data"
+DIR="$DATA_DIR/policies/iam"
 
 mkdir -p $DIR
 
@@ -38,7 +42,7 @@ workspace_scope="$DIR/workspaces"
 mkdir -p $workspace_scope
 
 log info "Exporting rolebindings on workspaces ..."
-workspaces="workspace/data/workspaces.yaml"
+workspaces="$DATA_DIR/workspace/workspaces.yaml"
 yq '.workspaces[] | [.fullName.name, .meta.uid] | @tsv' $workspaces | \
 while IFS=$'\t' read -r name uid
 do
@@ -51,7 +55,7 @@ clustergroup_scope="$DIR/clustergroups"
 mkdir -p $clustergroup_scope
 
 log info "Exporting rolebindings on clustergroups ..."
-clustergroups="clustergroup/data/clustergroups.yaml"
+clustergroups="$DATA_DIR/clustergroup/clustergroups.yaml"
 yq '.clusterGroups[] | [.fullName.name, .meta.uid] | @tsv' $clustergroups | \
 while IFS=$'\t' read -r name uid
 do
@@ -64,20 +68,19 @@ cluster_scope="$DIR/clusters"
 mkdir -p $cluster_scope
 
 log info "Exporting rolebindings on clusters ..."
-cluster_path="clusters/"
-for cluster_file in `find $cluster_path -name '*.yaml'`
+clusters="$cluster_scope/clusters.yaml"
+tanzu tmc cluster list -oyaml > $clusters
+
+yq '.clusters[] | [.fullName.managementClusterName, .fullName.provisionerName, .fullName.name, .meta.uid] | @tsv' $clusters | \
+while IFS=$'\t' read -r mgmt prvn name uid
 do
-    yq '.clusters[] | [.fullName.managementClusterName, .fullName.provisionerName, .fullName.name, .meta.uid] | @tsv' $cluster_file | \
-    while IFS=$'\t' read -r mgmt prvn name uid
-    do
-        # skip empty data
-        if [ -z $name ]; then
-            continue
-        fi
-        cluster_rolebindings="$cluster_scope/${mgmt}_${prvn}_${name}.json"
-        log info "Exporting rolebindings on cluster /${mgmt}/${prvn}/${name} ..."
-        export_rolebindings "$uid" "$cluster_rolebindings"
-    done
+    # skip empty data
+    if [ -z $name ]; then
+        continue
+    fi
+    cluster_rolebindings="$cluster_scope/${mgmt}_${prvn}_${name}.json"
+    log info "Exporting rolebindings on cluster /${mgmt}/${prvn}/${name} ..."
+    export_rolebindings "$uid" "$cluster_rolebindings"
 done
 
 namespace_scope="$DIR/namespaces"
