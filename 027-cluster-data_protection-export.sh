@@ -1,8 +1,8 @@
 #!/bin/bash
 
-set -e
+set +e
 
-DPDIR=data-protection-data
+DPDIR=data/data-protection
 rm -fr ${DPDIR}
 mkdir -p ${DPDIR}
 
@@ -13,7 +13,8 @@ tanzu tmc data-protection backup-location list -o yaml -s cluster > ${DPDIR}/bac
 
 # Save schedule
 echo "Saving schedule ......"
-tanzu tmc data-protection schedule list -o yaml > ${DPDIR}/schedule.yaml
+tanzu tmc data-protection schedule list -s cluster -o yaml > ${DPDIR}/schedule-clustergroup.yaml
+tanzu tmc data-protection schedule list -s clustergroup -o yaml > ${DPDIR}/schedule-cluster.yaml
 
 # Save backup
 echo "Saving backup ......"
@@ -44,15 +45,15 @@ yq -r '.backupLocations[] | .spec.assignedGroups[] | select(.clustergroup) | .cl
             -H "Authorization: Bearer $TMC_ACCESS_TOKEN" \
             -H "Content-Type: application/json" \
             -X GET \
-	    ${TMC_SAAS_ENDPOINT}/v1alpha1/clustergroups/${groupname}/dataprotection)
+            ${TMC_SAAS_ENDPOINT}/v1alpha1/clustergroups/${groupname}/dataprotection)
     if [[ "${dpgrp}" != "{}" ]]; then
         echo ${dpgrp} | yq -o yaml -P '.dataProtections' >> ${DPDIR}/dataprotection_clustergroups.yaml
     fi
 done
 
 echo "Saving dataprotection for clusters ......"
-#yq -r '.backupLocations[] | .fullName | .managementClusterName + " " + .provisionerName + " " + .clusterName' ${DPDIR}/backup_location_cluster.yaml | while read -r mgmtname provname clname; do
-yq -r '.backupLocations[] | .spec.assignedGroups[] | select(.cluster) | .cluster.managementClusterName + " " + .cluster.provisionerName + " " + .cluster.name' ${DPDIR}/backup_location_org.yaml | while read -r mgmtname provname clname; do
+yq -r '.backupLocations[] | .fullName | .managementClusterName + " " + .provisionerName + " " + .clusterName' ${DPDIR}/backup_location_cluster.yaml | while read -r mgmtname provname clname; do
+#yq -r '.backupLocations[] | .spec.assignedGroups[] | select(.cluster) | .cluster.managementClusterName + " " + .cluster.provisionerName + " " + .cluster.name' ${DPDIR}/backup_location_org.yaml | while read -r mgmtname provname clname; do
     echo "    cluster: ${clname}"
     dpcl=$(curl -k -s --http1.1 \
             -H "Authorization: Bearer $TMC_ACCESS_TOKEN" \
