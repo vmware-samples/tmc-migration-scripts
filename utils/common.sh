@@ -46,7 +46,7 @@ init () {
     trap "on_exit $msg" EXIT
 }
 
-ONBOARDED_CLUSTER_INDEX_FILE="$(dirname "${BASH_SOURCE[0]}")/../clusters/onboarded-clusters-name-index"
+ONBOARDED_CLUSTER_INDEX_FILE="$(dirname "${BASH_SOURCE[0]}")/../data/clusters/onboarded-clusters-name-index"
 
 check_onboarded_cluster () {
     local onboarded=1
