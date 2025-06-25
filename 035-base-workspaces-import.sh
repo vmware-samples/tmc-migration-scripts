@@ -9,6 +9,10 @@ if [ ! -d $DATA_DIR ]; then
   exit 0
 fi
 
+echo "************************************************************************"
+echo "* Importing Workspaces into TMC SM ..."
+echo "************************************************************************"
+
 workspaceList=`cat $DATA_DIR/workspaces.yaml | yq eval -o=json - | jq '.' | \
   jq -c '.workspaces[]'`
 
@@ -26,3 +30,5 @@ while IFS= read -r workspace; do
     fi
   fi
 done <<< "$workspaceList"
+
+echo "Imported Workspaces into TMC SM ..."

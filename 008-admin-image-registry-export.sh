@@ -9,8 +9,14 @@ if [ -d $DATA_DIR ]; then
 fi
 mkdir -p $DATA_DIR
 
+echo "************************************************************************"
+echo "* Exporting Image Registry from TMC SaaS ..."
+echo "************************************************************************"
+
 tanzu tmc account credential list -o yaml | \
   yq eval -o=json - | jq '.' | \
   jq 'del(.totalCount)' | \
   jq '.credentials |=map(select(.spec.capability == "IMAGE_REGISTRY"))' | \
   yq eval -P -  > "$DATA_DIR/image-registries.yaml"
+
+echo "Exported Image Registry from TMC SaaS"

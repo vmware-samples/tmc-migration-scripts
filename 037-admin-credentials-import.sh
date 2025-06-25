@@ -14,6 +14,10 @@ if [ ! -d $DATA_DIR ]; then
   exit 0
 fi
 
+echo "************************************************************************"
+echo "* Importing Credentials into TMC SM ..."
+echo "************************************************************************"
+
 if [ ! -d $DATA_DIR/$TEMPLATE_DIR ]; then
   echo "Nothing to do without directory $DATA_DIR/$TEMPLATE_DIR, please generate template files first"
   echo "Please fill in the missing values in each template file(credential/template/*.yaml) manually."
@@ -29,3 +33,5 @@ for file in "$DATA_DIR"/$TEMPLATE_DIR/*; do
     fi
   fi
 done
+
+echo "Imported Credentials into TMC SM ..."

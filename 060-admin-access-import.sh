@@ -10,6 +10,10 @@ if [ ! -d $DATA_DIR ]; then
   exit 0
 fi
 
+echo "************************************************************************"
+echo "* Importing Admin Access into TMC SM ..."
+echo "************************************************************************"
+
 for file in $DATA_DIR/*; do
   if [ -f "$file" ]; then
     filename=`basename $file .yaml`
@@ -34,3 +38,5 @@ for file in $DATA_DIR/*; do
     fi
   fi
 done
+
+echo "Imported Admin Access into TMC SM ..."

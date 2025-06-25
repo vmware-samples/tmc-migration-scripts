@@ -9,4 +9,10 @@ if [ -d $DATA_DIR ]; then
 fi
 mkdir -p $DATA_DIR
 
+echo "************************************************************************"
+echo "* Exporting ClusterGroups from TMC SaaS ..."
+echo "************************************************************************"
+
 tanzu tmc clustergroup list -o yaml > "$DATA_DIR/clustergroups.yaml"
+
+echo "Exported ClusterGroups from TMC SaaS"

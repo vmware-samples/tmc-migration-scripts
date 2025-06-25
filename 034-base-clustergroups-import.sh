@@ -9,6 +9,10 @@ if [ ! -d $DATA_DIR ]; then
   exit 0
 fi
 
+echo "************************************************************************"
+echo "* Importing Cluster Groups into TMC SM ..."
+echo "************************************************************************"
+
 clusterGroupList=`cat $DATA_DIR/clustergroups.yaml | yq eval -o=json - | jq '.' | \
   jq -c '.clusterGroups[]'`
 
@@ -26,3 +30,5 @@ while IFS= read -r clusterGroup; do
     fi
   fi
 done <<< "$clusterGroupList"
+
+echo "Imported Cluster Groups into TMC SM ..."

@@ -10,4 +10,10 @@ fi
 
 mkdir -p $DATA_DIR
 
+echo "************************************************************************"
+echo "* Exporting Workspaces from TMC SaaS ..."
+echo "************************************************************************"
+
 tanzu tmc workspace list -o yaml > "$DATA_DIR/workspaces.yaml"
+
+echo "Exported Workspaces from TMC SaaS"

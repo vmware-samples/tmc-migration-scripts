@@ -11,6 +11,10 @@ if [ ! -d $DATA_DIR ]; then
   exit 0
 fi
 
+echo "************************************************************************"
+echo "* Importing Admin Settings into TMC SM ..."
+echo "************************************************************************"
+
 for scope in "${scopes[@]}"; do
   settingList=$(cat $DATA_DIR/$scope/settings.yaml | yq eval -o=json - | jq -c '.effective[]')
   while IFS= read -r setting; do
@@ -55,3 +59,5 @@ for scope in "${scopes[@]}"; do
     fi
   done <<< "$settingList"
 done
+
+echo "Imported Admin Settings into TMC SM ..."

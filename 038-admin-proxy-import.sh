@@ -14,6 +14,10 @@ if [ ! -d $DATA_DIR ]; then
   exit 0
 fi
 
+echo "************************************************************************"
+echo "* Importing Proxy into TMC SM ..."
+echo "************************************************************************"
+
 if [ ! -d $DATA_DIR/$TEMPLATE_DIR ]; then
   echo "Nothing to do without directory $DATA_DIR/$TEMPLATE_DIR, please generate template files with script 038-admin-proxy-create-template.sh"
   echo "Please fill in the missing values in each template file(proxy/template/*.yaml) manually."
@@ -29,3 +33,5 @@ for file in "$DATA_DIR"/$TEMPLATE_DIR/*; do
     fi
   fi
 done
+
+echo "Imported Proxy into TMC SM ..."

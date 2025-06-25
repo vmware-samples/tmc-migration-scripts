@@ -11,6 +11,10 @@ fi
 mkdir -p $DATA_DIR
 source "$SCRIPT_DIR"/utils/saas-api-call.sh
 
+echo "************************************************************************"
+echo "* Exporting Admin Access from TMC SaaS ..."
+echo "************************************************************************"
+
 # No longer to support AZURE_AKS and AWS_EKS
 credentialList=`tanzu tmc account credential list -o yaml | \
   yq eval -o=json - | jq '.' | \
@@ -22,3 +26,5 @@ while IFS= read -r credential; do
   name=$(echo "$credential" | jq -r '.fullName.name // ""')
   curl_api_call -X GET "v1alpha1/account/credentials:iam/${name}" |jq '.' | yq eval -P - > $DATA_DIR/access---${name}.yaml
 done  <<< "$credentialList"
+
+echo "Exported Admin Access from TMC SaaS"

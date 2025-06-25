@@ -9,8 +9,14 @@ if [ -d $DATA_DIR ]; then
 fi
 mkdir -p $DATA_DIR
 
+echo "************************************************************************"
+echo "* Exporting Proxy from TMC SaaS ..."
+echo "************************************************************************"
+
 tanzu tmc account credential list -o yaml | \
   yq eval -o=json - | jq '.' | \
   jq 'del(.totalCount)' | \
   jq '.credentials |=map(select(.spec.capability == "PROXY_CONFIG"))' | \
   yq eval -P -  > "$DATA_DIR/proxies.yaml"
+
+echo "Exported Proxy from TMC SaaS"
