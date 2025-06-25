@@ -6,8 +6,9 @@ log "************************************************************************"
 log "* Import Policy Templates to TMC SM ..."
 log "************************************************************************"
 
-DIR="policies/templates"
-TEMP_DIR=$(mktemp -d)
+DATA_DIR="data"
+DIR="$DATA_DIR/policies/templates"
+TEMP_DIR="$SRC_DIR/$(date +%s)"
 
 src_templates="$DIR/templates.yaml"
 templates_temp_dir="$TEMP_DIR/templates"

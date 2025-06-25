@@ -3,8 +3,8 @@
 source utils/common.sh
 source utils/policy-helper.sh
 
-TEMP_DIR=$(mktemp -d)
-SRC_DIR="policies/assignments"
+DATA_DIR="data"
+SRC_DIR="$DATA_DIR/policies/assignments"
 
 import_cluster_policies() {
     scope="clusters"

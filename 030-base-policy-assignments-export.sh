@@ -6,7 +6,8 @@ log "************************************************************************"
 log "* Exporting Policy Assignments from TMC SaaS ..."
 log "************************************************************************"
 
-DIR="policies/assignments"
+DATA_DIR="data"
+DIR="$DATA_DIR/policies/assignments"
 mkdir -p $DIR
 
 org_scope="$DIR/organization"
@@ -20,7 +21,7 @@ workspace_scope="$DIR/workspaces"
 mkdir -p $workspace_scope
 
 log info "Exporting policies on workspaces ..."
-workspaces="workspace/data/workspaces.yaml"
+workspaces="$DATA_DIR/workspace/workspaces.yaml"
 yq '.workspaces[] | .fullName.name' $workspaces | \
 while read -r name
 do
@@ -33,7 +34,7 @@ clustergroup_scope="$DIR/clustergroups"
 mkdir -p $clustergroup_scope
 
 log info "Exporting policies on clustergroups ..."
-clustergroups="clustergroup/data/clustergroups.yaml"
+clustergroups="$DATA_DIR/clustergroup/clustergroups.yaml"
 yq '.clusterGroups[] | .fullName.name' $clustergroups | \
 while read -r name
 do
@@ -46,18 +47,16 @@ cluster_scope="$DIR/clusters"
 mkdir -p $cluster_scope
 
 log info "Exporting policies on clusters ..."
-cluster_path="clusters/"
-for cluster_file in `find $cluster_path -name '*.yaml'`
+clusters="$cluster_scope/clusters.yaml"
+tanzu tmc cluster list -oyaml > $clusters
+yq '.clusters[] | [.fullName.managementClusterName, .fullName.provisionerName, .fullName.name] | @tsv' $clusters | \
+while IFS=$'\t' read -r mgmt prvn name
 do
-    yq '.clusters[] | [.fullName.managementClusterName, .fullName.provisionerName, .fullName.name] | @tsv' $cluster_file | \
-    while IFS=$'\t' read -r mgmt prvn name
-    do
-        # skip empty data
-        if [ -z $name ]; then
-            continue
-        fi
+    # skip empty data
+    if [ -z $name ]; then
+        continue
+    fi
     cluster_policies="$cluster_scope/${mgmt}_${prvn}_${name}.yaml"
     log info "Exporting policies on cluster /${mgmt}/${prvn}/${name} ..."
     tanzu mission-control policy list -s cluster -n $name -m $mgmt -p $prvn -o yaml > $cluster_policies
-    done
 done

@@ -2,10 +2,9 @@
 
 source utils/policy-helper.sh
 
-TEMP_DIR=$(mktemp -d)
-log info "Temporary output in $TEMP_DIR"
-
-SRC_DIR="policies/assignments"
+DATA_DIR="data"
+DIR="$DATA_DIR/policies/assignments"
+TEMP_DIR="$SRC_DIR/$(date +%s)"
 
 import_org_policies() {
     scope="organization"
