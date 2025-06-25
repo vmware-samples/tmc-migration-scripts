@@ -68,8 +68,8 @@ spec:
   data:
     keyValue:
       data:
-        .dockerconfigjson: "<base64 string>"
-        ca-cert: "<base64 string>"
+        .dockerconfigjson: "<base64 string or call ./utils/create-docker-config-json-base64.sh to generate base64 string>"
+        ca-cert: "<base64 string or remove key/value if not needed >"
       type: DOCKERCONFIGJSON_SECRET_TYPE
   meta:
     provider: GENERIC_KEY_VALUE
