@@ -1,7 +1,7 @@
 #!/bin/bash
 # Resource: Workspace
 
-SCRIPT_DIR=$(dirname "$0")
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 DATA_DIR="$SCRIPT_DIR"/data/workspace
 
 if [ ! -d $DATA_DIR ]; then

@@ -2,7 +2,7 @@
 # Resource: Role (Under Administration)
 # Only export customized role by users.
 
-SCRIPT_DIR=$(dirname "$0")
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 DATA_DIR="$SCRIPT_DIR"/data/role
 
 if [ -d $DATA_DIR ]; then
