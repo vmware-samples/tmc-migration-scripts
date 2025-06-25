@@ -102,7 +102,9 @@ Operation includes:
 
 ## Run the Scripts
 
-1.  Export the necessary environment variables to set up connection context of SaaS.
+### In Manual way
+
+1. Export the necessary environment variables to set up connection context of SaaS.
 
     ```shell
     export TANZU_API_TOKEN=<CSP-TOKEN>
@@ -112,14 +114,15 @@ Operation includes:
     Run script [001-base-saas\_stack-connect.sh](./001-base-saas_stack-connect.sh) to create a context for connecting the SaaS stack.
 
     For STG environment, you can export below environment to override the PROD URL.
+
     ```shell
     export CSP_URL=https://console-stg.tanzu.broadcom.com/csp/gateway/am/api/auth/api-tokens/authorize
     export TMC_ENDPOINT=trh.tmc-dev.tanzu.broadcom.com
     ```
 
-2.  Export the related resources from the SaaS stack by running scripts **002 - 030**.
+2. Export the related resources from the SaaS stack by running scripts **002 - 030**.
 
-3.  Offboard the managed clusters from the SaaS stack by running script [031-base-managed\_clusters-offboard.sh](./031-base-managed_clusters-offboard.sh). Set
+3. Offboard the managed clusters from the SaaS stack by running script [031-base-managed\_clusters-offboard.sh](./031-base-managed_clusters-offboard.sh). Set
     the environment variable `TMC_MC_FILTER` to export the specified clusters only.
 
     ```shell
@@ -127,13 +130,13 @@ Operation includes:
     export TMC_MC_FILTER="my_mc_1, my_mc_2"
     ```
 
-4.  Offboard the attached non-NPC clusters from the SaaS stack by running script [032-base-attached\_non\_npc\_clusters-offboard.sh](./032-base-attached_non_npc_clusters-offboard). Set the environment variable `CLUSTER_NAME_FILTER` to export the specified attached clusters only.
+4. Offboard the attached non-NPC clusters from the SaaS stack by running script [032-base-attached\_non\_npc\_clusters-offboard.sh](./032-base-attached_non_npc_clusters-offboard). Set the environment variable `CLUSTER_NAME_FILTER` to export the specified attached clusters only.
 
     ```shell
     export CLUSTER_NAME_FILTER="attached1, attached2"
     ```
 
-5.  Export the necessary environment variables to set up connection context of SM.
+5. Export the necessary environment variables to set up connection context of SM.
 
     ```shell
     export TMC_SELF_MANAGED_USERNAME=admin-user@customer.com
@@ -144,17 +147,20 @@ Operation includes:
 
     Run script [033-base-sm\_stack-connect.sh](./033-base-sm_stack-connect.sh) to create context for connecting the SM stack.
 
-6.  Import resources `[cluster group, workspace, roles]` into SM by running scripts **034-036**.
+6. Import resources `[cluster group, workspace, roles]` into SM by running scripts **034-036**.
 
-7.  \[👤 **USER ACTION REQUIRED**] List user actions needed for running scripts **037-039**.
-   
+7. \[👤 **USER ACTION REQUIRED**] List user actions needed for running scripts **037-039**.
+
 * 7.1 Run 037-admin-credentials-create-template.sh to generate template yaml for each credential
+
     ```shell
       # data/credentials/template/*.yaml
       # Notes: User need to manually fill in the missing field values for each template yaml.
       ./037-admin-credentials-create-template.sh
     ```
+
     Template spec formats:
+
     ```yaml
 
     # 1.Spec Format for Self-provisioned: AWS S3 or S3 compatible
@@ -199,6 +205,7 @@ Operation includes:
             provider: AWS_EC2
             temporaryCredentialSupport: false
     ```
+
 * 7.2 Run 037-admin-credentials-import.sh to import credentials with template yaml files.
 
     ```shell
@@ -206,7 +213,9 @@ Operation includes:
       # Notes: User need to manually fill in the missing field values for each template yaml.
       ./037-admin-credentials-import.sh
     ```
+
 * 7.3 Run 038-admin-proxy-create-template.sh to generate template yaml for each proxy
+
     ```shell
       # data/proxy/template/*.yaml
       # Notes: User need to manually fill in the missing field values for each template yaml.
@@ -214,6 +223,7 @@ Operation includes:
     ```
 
     Template spec formats:
+
     ```yaml
     # remove the key pair under spec.data.data if empty or it can not pass the base64 validation by backend API.
     spec:
@@ -241,6 +251,7 @@ Operation includes:
     ```
 
 * 7.5 Run 039-admin-image-registry-create-template.sh to generate template yaml for each image-registry
+
     ```shell
       # data/image-registry/template/*.yaml
       # Notes: User need to manually fill in the missing field values for each template yaml.
@@ -248,6 +259,7 @@ Operation includes:
     ```
 
     Template spec formats:
+
     ```yaml
     # 1. Spec Format for Image registry without username and password
     spec:
@@ -283,12 +295,12 @@ Operation includes:
         ./039-admin-image-registry-import.sh
       ```
 
-
-8.  \[👤 **USER ACTION REQUIRED**] List user action needed for running script **040**.
+8. \[👤 **USER ACTION REQUIRED**] List user action needed for running script **040**.
 
     User must manually fill in the missing data fields depending on the type of k8s secret into the manifests in directory `./data/clustergroup-secrets`
 
     * SECRET_TYPE_OPAQUE
+
     ```yaml
     spec:
       atomicSpec:
@@ -299,6 +311,7 @@ Operation includes:
     ```
 
     * SECRET_TYPE_DOCKERCONFIGJSON
+
     ```yaml
     spec:
       atomicSpec:
@@ -307,13 +320,14 @@ Operation includes:
         secretType: SECRET_TYPE_DOCKERCONFIGJSON
     ```
 
-9.  Import resources `[secrets-exports, CD]` into SM by running scripts **041-042**.
+9. Import resources `[secrets-exports, CD]` into SM by running scripts **041-042**.
 
 10. \[👤 **USER ACTION REQUIRED**] List user action needed for running script **043**.
 
     Users must manually fill in the missing data field depending on the type of credential into the manifests in directory `./data/clustergroup-repository-credentials`
 
     * Username/Password
+
     ```yaml
     spec:
       atomicSpec:
@@ -323,7 +337,9 @@ Operation includes:
             password: base64-encoded-password
         sourceSecretType: USERNAME_PASSWORD
     ```
+
     * SSH Authentication
+
     ```yaml
     spec:
       atomicSpec:
@@ -333,7 +349,9 @@ Operation includes:
             known_hosts: base64-encoded-ssh-known-hosts
         sourceSecretType: SSH
     ```
+
     * CA Certificate
+
     ```yaml
     spec:
       atomicSpec:
@@ -357,10 +375,11 @@ Operation includes:
 14. Import resource `[namespace]` into SM by running script **050**.
 
 15. \[👤 **USER ACTION REQUIRED**] List user actions for **051**.
-    
+
     Users must manually fill in the missing data field depending on the type of k8s secret into the manifests in directory `./data/cluster-secrets`
 
     * SECRET_TYPE_OPAQUE
+
     ```yaml
     spec:
       data: # filled data field
@@ -368,7 +387,9 @@ Operation includes:
         key2: base64-encoded-value2
       secretType: SECRET_TYPE_OPAQUE
     ```
+
     * SECRET_TYPE_DOCKERCONFIGJSON
+
     ```yaml
     spec:
       data: # filled data field
@@ -383,6 +404,7 @@ Operation includes:
     Users must manually fill in the missing data field depending on the type of credential into the manifests in directory `./data/cluster-repository-credentials`
 
     * Username/Password
+
     ```yaml
     spec:
       data: # filled data field
@@ -391,7 +413,9 @@ Operation includes:
           password: base64-encoded-password
       sourceSecretType: USERNAME_PASSWORD
     ```
+
     * SSH Authentication
+
     ```yaml
     spec:
       data: # filled data field
@@ -400,7 +424,9 @@ Operation includes:
           known_hosts: base64-encoded-ssh-known-hosts
       sourceSecretType: SSH
     ```
+
     * CA Certificate
+
     ```yaml
     spec:
       data: # filled data field
@@ -417,3 +443,20 @@ Operation includes:
 
 20. Import resources `[Data protection]` 064. **Notes**: TBD to clarify the credentials depends on by DP should be imported in the previous steps.
 
+### Use jupyter notebook
+
+1. Install the jupyter lab by following its [guide](https://jupyter.org/install).
+
+    ```shell
+    pip install jupyterlab
+    ```
+
+1. Clone the repo and cd to the code folder.
+1. Start the jupyter lab from the code folder.
+
+    ```shell
+    # --no-browser and --allow-root is optional.
+    jupyter lab --no-browser --ip=0.0.0.0 --port=80 --allow-root
+    ```
+
+1. Open notebook `tmc-saas-migration-toi.ipynb` to run migration steps.
