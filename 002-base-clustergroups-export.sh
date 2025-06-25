@@ -15,4 +15,5 @@ echo "************************************************************************"
 
 tanzu tmc clustergroup list -o yaml > "$DATA_DIR/clustergroups.yaml"
 
-echo "Exported ClusterGroups from TMC SaaS"
+relative_path="${DATA_DIR#*migration-scripts/}"
+echo "Exported ClusterGroups from TMC SaaS: $relative_path/*.yaml"

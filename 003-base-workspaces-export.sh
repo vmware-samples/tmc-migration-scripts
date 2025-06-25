@@ -16,4 +16,5 @@ echo "************************************************************************"
 
 tanzu tmc workspace list -o yaml > "$DATA_DIR/workspaces.yaml"
 
-echo "Exported Workspaces from TMC SaaS"
+relative_path="${DATA_DIR#*migration-scripts/}"
+echo "Exported Workspaces from TMC SaaS: $relative_path/*.yaml"

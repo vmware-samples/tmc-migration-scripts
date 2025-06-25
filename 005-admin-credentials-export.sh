@@ -16,4 +16,5 @@ echo "************************************************************************"
 
 tanzu tmc account credential list -o yaml > "$DATA_DIR/credentials.yaml"
 
-echo "Exported Credentials from TMC SaaS"
+relative_path="${DATA_DIR#*migration-scripts/}"
+echo "Exported Credentials from TMC SaaS: $relative_path/*.yaml"

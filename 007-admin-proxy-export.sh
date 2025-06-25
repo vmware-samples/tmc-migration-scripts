@@ -19,4 +19,5 @@ tanzu tmc account credential list -o yaml | \
   jq '.credentials |=map(select(.spec.capability == "PROXY_CONFIG"))' | \
   yq eval -P -  > "$DATA_DIR/proxies.yaml"
 
-echo "Exported Proxy from TMC SaaS"
+relative_path="${DATA_DIR#*migration-scripts/}"
+echo "Exported Proxy from TMC SaaS: $relative_path/*.yaml"
