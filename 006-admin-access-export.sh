@@ -1,20 +1,15 @@
 #!/bin/bash
 # Resource: Access (Under Administration)
 
-DATA_DIR=data/credential-access
+SCRIPT_DIR=$(dirname "$0")
+DATA_DIR="$SCRIPT_DIR"/data/credential-access
 
 if [ -d $DATA_DIR ]; then
   rm -rf $DATA_DIR/*
 fi
 
 mkdir -p $DATA_DIR
-
-tmc_curl() {
-  tmcInfo=`tanzu context get migration | yq eval -o=json - | jq -c '.'`
-  TMC_ENDPOINT=`echo $tmcInfo | jq -r '.globalOpts.endpoint'`
-  TMC_ACCESS_TOKEN=`echo $tmcInfo | jq -r '.globalOpts.auth.accessToken'`
-  echo `curl -H 'Content-Type: application/json' -H "Authorization: Bearer $TMC_ACCESS_TOKEN" "https://$TMC_ENDPOINT/v1alpha1/account/credentials:iam/$@"`
-}
+source "$SCRIPT_DIR"/utils/saas-api-call.sh
 
 # No longer to support AZURE_AKS and AWS_EKS
 credentialList=`tanzu tmc account credential list -o yaml | \
@@ -24,6 +19,6 @@ credentialList=`tanzu tmc account credential list -o yaml | \
   jq -c '.credentials[]'`
 
 while IFS= read -r credential; do
- name=$(echo "$credential" | jq -r '.fullName.name // ""')
- tmc_curl ${name} |jq '.' | yq eval -P - > $DATA_DIR/access---${name}.yaml
+  name=$(echo "$credential" | jq -r '.fullName.name // ""')
+  curl_api_call -X GET "v1alpha1/account/credentials:iam/${name}" |jq '.' | yq eval -P - > $DATA_DIR/access---${name}.yaml
 done  <<< "$credentialList"

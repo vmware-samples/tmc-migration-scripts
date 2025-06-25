@@ -1,7 +1,8 @@
 #!/bin/bash
 # Resource: Role (Under Administration)
 
-DATA_DIR=data/role
+SCRIPT_DIR=$(dirname "$0")
+DATA_DIR="$SCRIPT_DIR"/data/role
 
 if [ ! -d $DATA_DIR ]; then
   echo "Nothing to do without directory $DATA_DIR, please backup data first"

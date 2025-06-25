@@ -2,7 +2,8 @@
 # Resource: Role (Under Administration)
 # Only export customized role by users.
 
-DATA_DIR=data/role
+SCRIPT_DIR=$(dirname "$0")
+DATA_DIR="$SCRIPT_DIR"/data/role
 
 if [ -d $DATA_DIR ]; then
   rm -rf $DATA_DIR/*

@@ -1,8 +1,9 @@
 #!/bin/bash
 # Resource: Access (Under Administration)
 
-source ./utils/sm-api-call.sh
-DATA_DIR=data/credential-access
+SCRIPT_DIR=$(dirname "$0")
+source "$SCRIPT_DIR"/utils/sm-api-call.sh
+DATA_DIR="$SCRIPT_DIR"/data/credential-access
 
 if [ ! -d $DATA_DIR ]; then
   echo "Nothing to do without directory $DATA_DIR, please backup data first"

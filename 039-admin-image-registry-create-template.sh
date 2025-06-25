@@ -6,7 +6,8 @@
 # The first script will generate template files under the folder: image-registry/template.
 # Then users need to fill in the missing fields such as CA, credentials.
 
-DATA_DIR=data/image-registry
+SCRIPT_DIR=$(dirname "$0")
+DATA_DIR="$SCRIPT_DIR"/data/image-registry
 TEMPLATE_DIR=template
 credential_type_json_template='{"type":{"kind":"Credential","version":"v1alpha1","package":"vmware.tanzu.manage.v1alpha1.account.credential.Credential"}}'
 authenticated_data_json_template='{"keyValue":{"data":{".dockerconfigjson":"","ca-cert":""},"type":"DOCKERCONFIGJSON_SECRET_TYPE"}}'

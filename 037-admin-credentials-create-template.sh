@@ -6,7 +6,8 @@
 # The first script will generate template files under the folder: credential/template.
 # Then users need to fill in the missing fields such as CA, credentials.
 
-DATA_DIR=data/credential
+SCRIPT_DIR=$(dirname "$0")
+DATA_DIR="$SCRIPT_DIR"/data/credential
 TEMPLATE_DIR=template
 credential_type_json_template='{"type":{"kind":"Credential","version":"v1alpha1","package":"vmware.tanzu.manage.v1alpha1.account.credential.Credential"}}'
 
