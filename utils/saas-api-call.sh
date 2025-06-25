@@ -1,8 +1,6 @@
 #!/bin/bash
 
-SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
-
-source $SCRIPT_DIR/log.sh
+source $(dirname "${BASH_SOURCE[0]}")/log.sh
 
 # The CSP_URL can be overridden by environment variable, e.g for stg CSP
 #  export CSP_URL=https://console-stg.tanzu.broadcom.com/csp/gateway/am/api/auth/api-tokens/authorize
@@ -10,8 +8,7 @@ if [ -z "$CSP_URL" ]; then
   CSP_URL="https://console.tanzu.broadcom.com/csp/gateway/am/api/auth/api-tokens/authorize"
 fi
 
-if [ -z "$TANZU_API_TOKEN" ] || [ -z "$
-ORG_NAME" ]; then
+if [ -z "$TANZU_API_TOKEN" ] || [ -z "$ORG_NAME" ]; then
   log error "Environment variables TANZU_API_TOKEN and ORG_NAME are required"
   exit 1
 fi
@@ -47,7 +44,7 @@ curl_api_call() {
   ATTEMPTS=10 # it does not always succeed to fetch the access token
   for ((i=0; i < $ATTEMPTS; i++));
   do
-    local access_token=$(curl -X POST "$CSP_URL?refresh_token=$TANZU_API_TOKEN" \
+    local access_token=$(curl -sS -X POST "$CSP_URL?refresh_token=$TANZU_API_TOKEN" \
     -H 'Content-Type: application/x-www-form-urlencoded' \
     -d "refresh-token=$TANZU_API_TOKEN" \
     | jq -r '.access_token')
@@ -64,7 +61,7 @@ curl_api_call() {
   fi
 
   # Build base curl command
-  local cmd="curl -X $method"
+  local cmd="curl -sS -X $method"
   cmd+=" -H \"Content-Type: application/json\""
   cmd+=" -H \"Authorization: Bearer $access_token\""
 
@@ -75,6 +72,8 @@ curl_api_call() {
 
   # Add the URL
   cmd+=" \"https://$TMC_ENDPOINT/$url\""
+
+  log debug "$cmd"
 
   eval "$cmd"
 }
