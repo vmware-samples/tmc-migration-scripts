@@ -30,8 +30,8 @@ MATCHED_MC=$(yq -r '.managementClusters[].fullName.name' $MC_LIST_FILE)
 
 #Export all the managed workload clusters under each management cluster first.
 for name in $MATCHED_MC; do
-    echo "Export the workload clusters under management cluster $name to clusters/wc_of_$name.yaml"
-    tanzu tmc cluster list -o yaml -m "$name" > "clusters/wc_of_$name.yaml";
+    echo "Export the workload clusters under management cluster $name to $MC_LIST_FOLDER/wc_of_$name.yaml"
+    tanzu tmc cluster list -o yaml -m "$name" > "$MC_LIST_FOLDER/wc_of_$name.yaml";
 done
 
 #Unmanage all the workload clusters under the management cluster before deregister.
