@@ -40,12 +40,12 @@ while IFS= read -r credential; do
       jq 'del(.fullName.orgId, .meta.parentReferences, .meta.creationTime, .meta.generation, .meta.resourceVersion, .meta.annotations, .meta.updateTime, .meta.uid, .type, .status)' | \
       jq --argjson typeJson "$credential_type_json_template" '. += $typeJson'  | \
       jq --argjson data "{\"aws_access_key_id\":\"\",\"aws_secret_access_key\":\"\"}" '.spec.data.keyValue.data += $data'  | \
-      yq eval -P -  > "$DIR/$TEMPLATE_DIR/${provider}--${name}.yaml"
+      yq eval -P -  > "$DATA_DIR/$TEMPLATE_DIR/${provider}--${name}.yaml"
   elif [ "$provider" = "AWS_EC2" ] || [ "$provider" = "AZURE_AD" ]; then
     echo "$credential" | \
       jq 'del(.fullName.orgId, .meta.parentReferences, .meta.creationTime, .meta.generation, .meta.resourceVersion, .meta.annotations, .meta.updateTime, .meta.uid, .type, .status)' | \
       jq --argjson typeJson "$credential_type_json_template" '. += $typeJson'  | \
-      yq eval -P -  > "$DIR/$TEMPLATE_DIR/${provider}--${name}.yaml"
+      yq eval -P -  > "$DATA_DIR/$TEMPLATE_DIR/${provider}--${name}.yaml"
   fi
 done  <<< "$credentialList"
 
