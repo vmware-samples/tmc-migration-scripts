@@ -81,3 +81,8 @@ yq -r '.backupLocations[] | .spec.assignedGroups[] | select(.cluster) | .cluster
         echo ${dpcl} | yq -o yaml -P '.dataProtections' >> ${DPDIR}/dataprotection_clusters.yaml
     fi
 done
+
+# Support linux only
+echo "Removing orgId from files ......"
+grep "orgId: " ${DPDIR}/* -r
+find ${DPDIR} -name "*.yaml" -exec sed -i '/orgId: /d' {} \;
