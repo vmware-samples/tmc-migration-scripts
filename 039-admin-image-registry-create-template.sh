@@ -43,7 +43,7 @@ while IFS= read -r imageRegistry; do
     jq --argjson typeJson "$credential_type_json_template" '. += $typeJson'  | \
     jq --argjson new_data "$spec_data" '.spec.data = $new_data' | \
     jq --argjson new_annotations "{\"registry-namespace\":\"$registryNamespace\"}" '.meta.annotations = $new_annotations' | \
-    yq eval -P -  > "$DIR/$TEMPLATE_DIR/${name}.yaml"
+    yq eval -P -  > "$DATA_DIR/$TEMPLATE_DIR/${name}.yaml"
 done <<< "$imageRegistryList"
 
 echo '''

@@ -31,7 +31,7 @@ while IFS= read -r proxy; do
     jq 'del(.fullName.orgId, .meta.parentReferences, .meta.annotations."x-customer-domain", .type, .status)' | \
     jq --argjson typeJson "$credential_type_json_template" '. += $typeJson'  | \
     jq --argjson new_data "$proxy_data_json_template" '.spec.data.keyValue.data = $new_data' | \
-    yq eval -P -  > "$DIR/$TEMPLATE_DIR/${name}.yaml"
+    yq eval -P -  > "$DATA_DIR/$TEMPLATE_DIR/${name}.yaml"
 done <<< "$proxyList"
 
 echo '''
