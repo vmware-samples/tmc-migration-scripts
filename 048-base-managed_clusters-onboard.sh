@@ -1,8 +1,9 @@
 #!/bin/bash
 
-MC_LIST_YAML_FILE=data/clusters/mc_list.yaml
-MC_KUBECONFIG_INDEX_FILE=data/clusters/mc-kubeconfig-index-file
-REGISTERED_FILE="data/clusters/mc_registered.txt"
+CLUSTER_DATA_DIR="data/clusters"
+MC_LIST_YAML_FILE=$CLUSTER_DATA_DIR/mc_list.yaml
+MC_KUBECONFIG_INDEX_FILE=$CLUSTER_DATA_DIR/mc-kubeconfig-index-file
+REGISTERED_FILE=$CLUSTER_DATA_DIR/mc_registered.txt
 PLACEHOLDER_TEXT="/path/to/the/real/mc_kubeconfig/file"
 
 # If the $MC_KUBECONFIG_INDEX_FILE file is NOT completely updated, then stop to proceed.
@@ -141,7 +142,7 @@ while [ "$index" -lt "$total" ]; do
 
   if [ "$health" == "HEALTHY" ] && [[ "$name" != "aks" && "$name" != "eks" && "$name" != "attached" ]]; then
     orgId=$(yq ".managementClusters[$index].fullName.orgId" $MC_LIST_YAML_FILE)
-    file="clusters/mc_${orgId}_${name}.yaml"
+    file="$CLUSTER_DATA_DIR/mc_${orgId}_${name}.yaml"
 
     echo "Processing mc $name [health=$health]"
 
@@ -173,7 +174,7 @@ done
 
 # Mange the workload clusters.
 MIN_VERSION="1.28.0"
-ONBOARDED_CLUSTER_INDEX_FILE="data/clusters/onboarded-clusters-name-index"
+ONBOARDED_CLUSTER_INDEX_FILE="$CLUSTER_DATA_DIR/onboarded-clusters-name-index"
 
 # Strip v prefix and metadata from version (e.g., v1.29.4+ -> 1.29.4)
 sanitize_version() {
@@ -187,7 +188,7 @@ compare_versions() {
 
 # Read management cluster name from $REGISTERED_FILE.
 while IFS= read -r mc_name; do
-    wc_file="clusters/wc_of_${mc_name}.yaml"
+    wc_file="$CLUSTER_DATA_DIR/wc_of_${mc_name}.yaml"
     
     if [[ ! -f "$wc_file" ]]; then
         echo "File $wc_file not found. Skipping..."

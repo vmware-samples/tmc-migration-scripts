@@ -1,7 +1,7 @@
 #!/bin/bash
-
-INPUT_CLUSTERS_FILE=data/clusters/attached_non_npc_clusters.yaml
-WC_KUBECONFIG_INDEX_FILE=data/clusters/attached-wc-kubeconfig-index-file
+CLUSTER_DATA_DIR=data/clusters
+INPUT_CLUSTERS_FILE=$CLUSTER_DATA_DIR/attached_non_npc_clusters.yaml
+WC_KUBECONFIG_INDEX_FILE=$CLUSTER_DATA_DIR/attached-wc-kubeconfig-index-file
 PLACEHOLDER_TEXT="/path/to/the/real/wc_kubeconfig/file"
 
 # If the $MC_KUBECONFIG_INDEX_FILE file is NOT completely updated, then stop to proceed.
@@ -12,9 +12,9 @@ fi
 
 
 # Attach non-NPC clusters.
-ONBOARDED_CLUSTER_INDEX_FILE="data/clusters/onboarded-clusters-name-index"
+ONBOARDED_CLUSTER_INDEX_FILE="$CLUSTER_DATA_DIR/onboarded-clusters-name-index"
 
-ATTACHED_CLUSTER_DIR=data/clusters/attached
+ATTACHED_CLUSTER_DIR=$CLUSTER_DATA_DIR/attached
 mkdir -p $ATTACHED_CLUSTER_DIR
 
 # Iterate through clusters
@@ -51,6 +51,7 @@ while [ "$index" -lt "$total" ]; do
     # Record cluster name for resoruce onboarding
     if [ $? -eq 0 ]; then
       if ! grep -qxf "$name" "$ONBOARDED_CLUSTER_INDEX_FILE"; then
+        echo "Append cluster name '$name' to onboarded cluster index file '$ONBOARDED_CLUSTER_INDEX_FILE'"
         # If it doesn't exist, append it
         echo "attached.attached.$name" >> "$ONBOARDED_CLUSTER_INDEX_FILE"
       fi
