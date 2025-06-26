@@ -3,7 +3,7 @@
 set +e
 
 ONBOARDED_CLUSTER_INDEX_FILE="data/clusters/onboarded-clusters-name-index"
-TEMPFILE=_temp_dp_file_$(date +%s)
+TEMPFILE=/tmp/_temp_dp_file_$(date +%s)
 DPDIR=data/data-protection
 if [ ! -d "${DPDIR}" ]; then
     echo "Dir %{DPDIR} doesn't exist!"
@@ -42,6 +42,14 @@ function create_dp_resources() {
         fi
         echo "${elem}" > ${TEMPFILE}
         cat ${TEMPFILE}
+        if [[ "${dpcmd}" != "backup-location" ]] && [[ "${scope}" != "clustergroup" ]]; then
+            # Just import cluster specific backup/schedule
+            fullname=$(yq '.fullName | .managementClusterName + "." + .provisionerName + "." + .clusterName' ${TEMPFILE})
+            if ! grep -qx "${fullname}" "$ONBOARDED_CLUSTER_INDEX_FILE"; then
+                echo "Cluster ${fullname} doesn't exist, just skip it"
+                continue
+            fi
+        fi
         # Don't stop even the command fails, creating duplicated resoure will be
         # handled by TMCSM
         SCOPE=""
@@ -56,7 +64,7 @@ function create_dp_resources() {
                 break
             fi
             echo ${retmsg}
-            echo "try again ${trynum}/10 ..."
+            echo "try again ${trynum}/60 ..."
             sleep 10
         done
     done
@@ -97,7 +105,7 @@ function enable_dataprotection() {
 }
 
 # Load backup location for both org and clsuter
-create_dp_resources "backup_location_org.yaml" "backupLocations" "backup-location"
+create_dp_resources "backup_location_org.yaml" "backupLocations" "backup-location" ""
 # It seems we don't need create location for cluster, because clusters are in org already
 #create_dp_resources "backup_location_cluster.yaml" "backupLocations" "backup-location"
 
