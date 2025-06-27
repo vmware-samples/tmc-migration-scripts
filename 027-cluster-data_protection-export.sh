@@ -2,6 +2,15 @@
 
 set +e
 
+# For test only
+#ORG_NAME="not-used"
+#CSP_URL="https://console-stg.tanzu.broadcom.com/csp/gateway/am/api/auth/api-tokens/authorize"
+#TANZU_API_TOKEN=${MY_CSP_TOKEN}
+#TMC_ENDPOINT="trh.tmc-dev.tanzu.broadcom.com"
+#TMC_ENDPOINT="tanzumissioncontroluserorgstg.tmc-dev.tanzu.broadcom.com"
+
+source utils/saas-api-call.sh
+
 DPDIR=data/data-protection
 rm -fr ${DPDIR}
 mkdir -p ${DPDIR}
@@ -45,21 +54,11 @@ tanzu tmc data-protection template list | while read -r line; do
 done
 
 # dataprotection on clusters/clustergroups
-#TMC_ACCESS_TOKEN=<required>
-#TMC_SAAS_ENDPOINT=<required>
-
-# For test only
-#TMC_ACCESS_TOKEN=$(curl -s -X POST -H "Content-Type=application/x-www-form-urlencoded" https://console-stg.tanzu.broadcom.com/csp/gateway/am/api/auth/api-tokens/authorize --data-urlencode "refresh_token=$MY_CSP_TOKEN" | jq -r '.access_token')
-#TMC_SAAS_ENDPOINT="https://trh.tmc-dev.tanzu.broadcom.com"
 
 echo "Saving dataprotection for clustergroups ......"
 yq -r '.backupLocations[] | .spec.assignedGroups[] | select(.clustergroup) | .clustergroup.name' ${DPDIR}/backup_location_org.yaml | while read -r groupname; do
     echo "    clustergroup: ${groupname}"
-    dpgrp=$(curl -k -s --http1.1 \
-            -H "Authorization: Bearer $TMC_ACCESS_TOKEN" \
-            -H "Content-Type: application/json" \
-            -X GET \
-            ${TMC_SAAS_ENDPOINT}/v1alpha1/clustergroups/${groupname}/dataprotection)
+    dpgrp=$(curl_api_call v1alpha1/clustergroups/${groupname}/dataprotection)
     if [[ "${dpgrp}" != "{}" ]]; then
         dps=$(echo ${dpgrp} | yq -o yaml -P '.dataProtections')
         if [[ "${dps}" != "null" ]] && [[ "${dps}" != "[]" ]]; then
@@ -72,17 +71,13 @@ echo "Saving dataprotection for clusters ......"
 #yq -r '.backupLocations[] | .fullName | .managementClusterName + " " + .provisionerName + " " + .clusterName' ${DPDIR}/backup_location_cluster.yaml | while read -r mgmtname provname clname; do
 yq -r '.backupLocations[] | .spec.assignedGroups[] | select(.cluster) | .cluster.managementClusterName + " " + .cluster.provisionerName + " " + .cluster.name' ${DPDIR}/backup_location_org.yaml | while read -r mgmtname provname clname; do
     echo "    cluster: ${clname}"
-    dpcl=$(curl -k -s --http1.1 \
-            -H "Authorization: Bearer $TMC_ACCESS_TOKEN" \
-            -H "Content-Type: application/json" \
-            -X GET \
-            ${TMC_SAAS_ENDPOINT}/v1alpha1/clusters/${clname}/dataprotection\?fullName.managementClusterName=${mgmtname}\&fullName.provisionerName=${provname})
+    dpcl=$(curl_api_call v1alpha1/clusters/${clname}/dataprotection\?fullName.managementClusterName=${mgmtname}\&fullName.provisionerName=${provname})
     if [[ "${dpcl}" != "{}" ]]; then
         echo ${dpcl} | yq -o yaml -P '.dataProtections' >> ${DPDIR}/dataprotection_clusters.yaml
     fi
 done
 
-# Support linux only
+# Support linux only, for MacOS, please use 'gsed' instead
 echo "Removing orgId from files ......"
 grep "orgId: " ${DPDIR}/* -r
 find ${DPDIR} -name "*.yaml" -exec sed -i '/orgId: /d' {} \;
