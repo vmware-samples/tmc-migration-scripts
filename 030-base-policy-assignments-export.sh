@@ -2,6 +2,8 @@
 
 source utils/log.sh
 
+register_last_words "Export policy assignments"
+
 log "************************************************************************"
 log "* Exporting Policy Assignments from TMC SaaS ..."
 log "************************************************************************"

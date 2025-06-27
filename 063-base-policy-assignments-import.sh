@@ -1,18 +1,21 @@
 #! /bin/bash
 
+source utils/log.sh
 source utils/policy-helper.sh
 
+register_last_words "Import policy assignments"
+
 DATA_DIR="data"
-DIR="$DATA_DIR/policies/assignments"
-TEMP_DIR="$SRC_DIR/$(date +%s)"
+DIR="$PWD/$DATA_DIR/policies/assignments"
+TEMP_DIR="$DIR/$(date +%s)"
 
 import_org_policies() {
     scope="organization"
     policies_temp="$TEMP_DIR/$scope"
     mkdir -p $policies_temp
-    script_path=$PWD
+
     pushd $policies_temp > /dev/null
-        yq '.policies[]' -s '.fullName.name' $script_path/$SRC_DIR/$scope/policies.yaml
+        yq '.policies[]' -s '.fullName.name' $DIR/$scope/policies.yaml
         for p_file in $(ls *.yml)
         do
             yq -i 'del(.fullName.orgId)' $p_file

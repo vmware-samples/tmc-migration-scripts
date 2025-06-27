@@ -4,6 +4,8 @@ set +x
 source utils/log.sh
 source utils/saas-api-call.sh
 
+register_last_words "Export access policies"
+
 export_org_rolebindings() {
     role_bindings=$1
     tanzu tmc iam list -s organization -o json > $role_bindings

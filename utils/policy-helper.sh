@@ -1,6 +1,6 @@
 #! /bin/bash
 
-SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
+SCRIPT_DIR=$PWD/$(dirname "${BASH_SOURCE[0]}")
 
 source $SCRIPT_DIR/log.sh
 source $SCRIPT_DIR/sm-api-call.sh
@@ -21,6 +21,7 @@ import_rolebindings() {
 
     url="v1alpha1/${scope}:iam${resource_name}${params}"
     curl_api_call -X PUT -d "@$rolebindings" "$url"
+    echo ""
 }
 
 generate_policy_spec() {
@@ -28,7 +29,7 @@ generate_policy_spec() {
    name=$2
    output=$3
 
-   pushd $SCRIPT_DIR/../policies/assignments/$scope > /dev/null
+   pushd $SCRIPT_DIR/../data/policies/assignments/$scope > /dev/null
    for name in $(ls *.yaml | sed 's/.yaml//')
    do
        src_policies="$name.yaml"

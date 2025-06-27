@@ -42,3 +42,15 @@ log() {
             ;;
     esac
 }
+
+say_bye() {
+    if [ $? -eq 0 ]; then
+        log info "$* completed successfully! ${COLOR_SUCCESS}✔${COLOR_RESET}"
+    else
+        log error "$* exited with an error. ${COLOR_ERROR}✖${COLOR_RESET}"
+    fi 
+}
+
+register_last_words() {
+    trap "say_bye $*" EXIT
+}

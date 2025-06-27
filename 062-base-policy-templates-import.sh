@@ -2,6 +2,8 @@
 
 source utils/log.sh
 
+register_last_words "Import policy templates"
+
 log "************************************************************************"
 log "* Import Policy Templates to TMC SM ..."
 log "************************************************************************"
