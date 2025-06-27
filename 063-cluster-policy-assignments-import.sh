@@ -3,8 +3,11 @@
 source utils/common.sh
 source utils/policy-helper.sh
 
+register_last_words "Import policy assignments"
+
 DATA_DIR="data"
-SRC_DIR="$DATA_DIR/policies/assignments"
+SRC_DIR="$PWD/$DATA_DIR/policies/assignments"
+TEMP_DIR="$SRC_DIR/$(date +%s)"
 
 import_cluster_policies() {
     scope="clusters"

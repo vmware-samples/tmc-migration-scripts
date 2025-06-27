@@ -1,10 +1,13 @@
 #! /bin/bash
 
+source utils/common.sh
 source utils/policy-helper.sh
+
+register_last_words "Import access policies"
 
 DATA_DIR="data"
 SRC_DIR="$DATA_DIR/policies/iam"
-TEMP_DIR="$SRC_DIR/$(date +%s)"
+TEMP_DIR="$PWD/$SRC_DIR/$(date +%s)"
 
 import_org_rolebindings() {
     scope="organization"
@@ -32,6 +35,8 @@ import_clustergroup_rolebindings() {
     ls *.json | sed 's/.json$//'\ | \
     while read -r resource_name
     do
+        log info "Importing access policies on clustergroup $resource_name ..."
+        
         rolebindings="$clustergroup_temp/$resource_name.json"
         direct_effectives=$(jq '.effective[] | select(.spec.inherited != true)' $resource_name.json)
         if [ -z "$direct_effectives" ]; then
@@ -40,6 +45,7 @@ import_clustergroup_rolebindings() {
         fi
 
         jq '.effective[] | select(.spec.inherited != true).spec.policySpec' $resource_name.json > $rolebindings
+        
         import_rolebindings "$rolebindings" "$scope" "$resource_name"
     done
     popd > /dev/null
@@ -58,6 +64,8 @@ import_workspace_rolebindings() {
     ls *.json | sed 's/.json$//'\ | \
     while read -r resource_name
     do
+        log info "Importing access policies on workspace $resource_name ..."
+        
         rolebindings="$workspace_temp/$resource_name.json"
         direct_effectives=$(jq '.effective[] | select(.spec.inherited != true)' $resource_name.json)
         if [ -z "$direct_effectives" ]; then
@@ -66,6 +74,7 @@ import_workspace_rolebindings() {
         fi
 
         jq '.effective[] | select(.spec.inherited != true).spec.policySpec' $resource_name.json > $rolebindings
+        
         import_rolebindings "$rolebindings" "$scope" "$resource_name"
     done
     popd > /dev/null

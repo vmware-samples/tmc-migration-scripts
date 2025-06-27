@@ -6,16 +6,16 @@ curl_api_call() {
   local url=""
 
   # Parse flags
-  while getopts "X:d:" opt; do
+  while [[ $# -gt 0 ]]
+  do
+    opt=${1:-""}
     case $opt in
-      X) method="$OPTARG" ;;
-      d) data="$OPTARG" ;;
-      \?) echo "Invalid option: -$OPTARG" >&2; return 1 ;;
+      -X) method="$2"; shift 2;;
+      -d) data="$2"; shift 2;;
+      *) url="$1"; shift;;
     esac
   done
-  shift $((OPTIND -1))  # Shift to get the positional URL argument
-
-  url="$1"
+  
   if [ -z "$url" ]; then
     echo "Usage: curl_api_call [-X METHOD] [-d DATA] <URL>"
     return 1

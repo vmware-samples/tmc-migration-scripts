@@ -1,11 +1,13 @@
 #! /bin/bash
 
-source utils/common.sh
 source utils/policy-helper.sh
+source utils/common.sh
+
+register_last_words "Import access policies"
 
 DATA_DIR="data"
 SRC_DIR="$DATA_DIR/policies/iam"
-TEMP_DIR="$SRC_DIR/$(date +%s)"
+TEMP_DIR="$PWD/$SRC_DIR/$(date +%s)"
 
 import_cluster_rolebindings() {
     scope="clusters"
@@ -57,7 +59,7 @@ import_namespace_rolebindings() {
         jq '.effective[] | select(.spec.inherited != true).spec.policySpec' $resource_full_name.json > $rolebindings
 
         IFS='_' read -r mgmt prvn cls name <<< "$resource_full_name"
-        if ! grep "$mgmt.$prvn.$cls" $ONBOARDED_CLUSTER_INDEX_FILE; then
+        if ! check_onboarded_cluster $mgmt $prvn $cls; then
             log info "[SKIP] undesired namespace $mgmt/$prvn/$cls/$name"
             continue
         fi
@@ -68,7 +70,7 @@ import_namespace_rolebindings() {
 }
 
 log "************************************************************************"
-log "* Import Policy Access on Clusters to TMC SM ..."
+log "* Import Policy Access on Clusters and Namespaces to TMC SM ..."
 log "************************************************************************"
 
 log info "Importing rolebindings on clusters ..."
