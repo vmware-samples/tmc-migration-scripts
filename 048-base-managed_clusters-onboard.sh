@@ -128,6 +128,39 @@ function wait_for_pods_cleaned() {
     done
 }
 
+wait_for_mc_healthy() {
+  local mgmt_cluster="$1"
+  local INTERVAL=10
+  local TIMEOUT=600
+
+  echo "Waiting for the management cluster '$mgmt_cluster' to become healthy"
+
+  local start_time
+  start_time=$(date +%s)
+
+  while true; do
+    local healthy_status=$(tanzu tmc mc get $mgmt_cluster -o yaml | yq .status.health)
+
+    # Exit if the management cluster has already been healthy.
+    if [[ $healthy_status == "HEALTHY" ]]; then
+      echo "Management cluster '$mgmt_cluster' is HEALTHY"
+      return 0
+    fi
+
+    local current_time
+    current_time=$(date +%s)
+    local elapsed=$((current_time - start_time))
+
+    if (( elapsed >= TIMEOUT )); then
+      echo "Timeout reached after $elapsed seconds. Exiting with failure."
+      return 1
+    fi
+
+    echo "Cluster healthy status is '$healthy_status'. Waiting $INTERVAL seconds..."
+    sleep "$INTERVAL"
+  done
+}
+
 
 # Reset tracking file
 : > "$REGISTERED_FILE"
@@ -164,6 +197,9 @@ while [ "$index" -lt "$total" ]; do
     else
       tanzu tmc mc register "$name" -f "$file" --kubeconfig "$KUBECONFIG_PATH"
     fi
+
+    # Wait for the registered MC is healthy.
+    wait_for_mc_healthy $name
     
     # Track the name of successfully registered management cluster for later use.
     echo "$name" >> "$REGISTERED_FILE"
@@ -218,7 +254,7 @@ while IFS= read -r mc_name; do
         [[ -n "$proxy" && "$proxy" != "null" ]] && cmd+=" --proxy-name \"$proxy\""
         [[ -n "$registry" && "$registry" != "null" ]] && cmd+=" --image-registry \"$registry\""
 
-	    echo "Run $cmd"
+	      echo "Run $cmd"
         eval $cmd
         if [ $? -eq 0 ]; then
             onboarded_cluster_name="$mgmt.$prov.$name"
