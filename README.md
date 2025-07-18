@@ -36,9 +36,11 @@ This is a repo to store the scripts in the [Migrate TMC SaaS to SM](https://docs
 | [028-base-access-policies-export.sh](./028-base-access-policies-export.sh)                                       | Export access policies                                                             | READY  |                                                                                                                                                            |
 | [029-base-policy-templates-export.sh](./029-base-policy-templates-export.sh)                                     | Export policy templates                                                            | READY |                                                                                                                                                            |
 | [030-base-policy-assignments-export.sh](./030-base-policy-assignments-export.sh)                                 | Export policy assignments                                                     | READY |                                                                                                                                                            |
+| [031-base-managed\_clusters-export.sh](./031-base-managed_clusters-export.sh)                        | Export the metadata of the managed TKG clusters from TMC SaaS before offboarding              | READY  | VKS (aka. TKGs) and TKGm clusters                                                                                                                          |
 | [031-base-managed\_clusters-offboard.sh](./031-base-managed_clusters-offboard.sh)                        | Offboard the managed TKG clusters from TMC SaaS              | READY  | VKS (aka. TKGs) and TKGm clusters                                                                                                                          |
+| [032-base-attached\_non\_npc\_clusters-export.sh](./032-base-attached_non_npc_clusters-export.sh)    | Export the metadata of the attached non-NPC clusters from TMC SaaS before offboarding         | READY  | Attached Non-NPC clusters                                                                                                                                  |
 | [032-base-attached\_non\_npc\_clusters-offboard.sh](./032-base-attached_non_npc_clusters-offboard.sh)    | Offboard the attached non-NPC clusters from TMC SaaS         | READY  | Attached Non-NPC clusters                                                                                                                                  |
-| [033-base-sm\_stack-connect.sh](./033-base-sm_stack-connect.sh)                                          |                                                              |        |                                                                                                                                                            |
+| [033-base-sm\_stack-connect.sh](./033-base-sm_stack-connect.sh)                                          | Connect to the TMC SM stack                                                             |   READY     |                                                                                                                                                            |
 | [034-base-clustergroups-import.sh](./034-base-clustergroups-import.sh)                                   | Import cluster-groups into TMC SM                            | READY  |                                                                                                                                                            |
 | [035-base-workspaces-import.sh](./035-base-workspaces-import.sh)                                         | Import workspaces into TMC SM                                | READY  |                                                                                                                                                            |
 | [036-admin-roles-import.sh](./036-admin-roles-import.sh)                                                 | Import roles into TMC SM                                     | READY  |                                                                                                                                                            |
@@ -56,8 +58,8 @@ This is a repo to store the scripts in the [Migrate TMC SaaS to SM](https://docs
 | [045-clustergroup-kustomizations-import.sh](./045-clustergroup-kustomizations-import.sh)                 | Import kustomization resources to cluster groups             | READY  |                                                                                                                                                            |
 | [046-clustergroup-helms-import.sh](./046-clustergroup-helms-import.sh)                                   | Import helm resources to cluster groups                      | READY  |                                                                                                                                                            |
 | [047-clustergroup-helm-releases-import.sh](./047-clustergroup-helm-releases-import.sh)                   | Import helm release resources to cluster groups              | READY  |                                                                                                                                                            |
-| [048-base-managed\_clusters-onboard.sh](./048-base-managed_clusters-onboard.sh)                          | Onboard the managed TKG clusters to TMC SM                   | tbd    | - VKS (aka. TKGs) and TKGm clusters  - Prepare the required MC Kubeconfig index file with [048-prepare-for-user-input.sh](./048-prepare-for-user-input.sh) |
-| [049-base-non\_npc\_clusters-onboard.sh](./049-base-non_npc_clusters-onboard.sh)                         | Onboard the attached non-NPC clusters to TMC SM              | tbd    | Attached Non-NPC clusters  - Prepare the required WC Kubeconfig index file with [049-prepare-for-user-input.sh](./049-prepare-for-user-input.sh)           |
+| [048-base-managed\_clusters-onboard.sh](./048-base-managed_clusters-onboard.sh)                          | Onboard the managed TKG clusters to TMC SM                   | READY    | - VKS (aka. TKGs) and TKGm clusters  - Prepare the required MC Kubeconfig index file with [048-base-managed\_clusters-input\_from\_user.sh](./048-base-managed_clusters-input_from_user.sh) |
+| [049-base-non\_npc\_clusters-onboard.sh](./049-base-non_npc_clusters-onboard.sh)                         | Onboard the attached non-NPC clusters to TMC SM              | READY    | Attached Non-NPC clusters  - Prepare the required WC Kubeconfig index file with [049-base-non\_npc\_clusters-input\_from\_user.sh](./049-base-non_npc_clusters-input_from_user.sh)           |
 | [050-cluster-namespaces-import.sh](./050-cluster-namespaces-import.sh)                                   | Import managed namespace resources to clusters               | READY  |                                                                                                                                                            |
 | [051-cluster-secrets-import.sh](./051-cluster-secrets-import.sh)                                         | Import k8s secret resources to clusters                      | READY  | Users must manually fill in the missing data field depending on the type of k8s secret                                                                    |
 | [052-cluster-secret-exports-import.sh](./052-cluster-secret-exports-import.sh)                           | Import k8s secret export resources to clusters               | READY  |                                                                                                                                                            |
@@ -74,7 +76,7 @@ This is a repo to store the scripts in the [Migrate TMC SaaS to SM](https://docs
 | [062-base-policy-templates-import.sh](./062-base-policy-templates-import.sh)                             | Import policy templates                                                            | READY  |                                                                                                                                                            |
 | [063-base-policy-assignments-import.sh](./063-base-policy-assignments-import.sh)                         | Import policy assignments on organization/clustergroups/workspaces                                                             | READY |                                                                                                                                                            |
 | [063-cluster-policy-assignments-import.sh](./063-cluster-policy-assignments-import.sh)                   |  Import policy assignments on clusters                                                            | READY |                                                                                                                                                            |
-| [064-cluster-data\_protection-import.sh](./064-cluster-data_protection-import.sh)                        |  Import data protections                                     | Ready  |                                                                                                                                                            |
+| [064-cluster-data\_protection-import.sh](./064-cluster-data_protection-import.sh)                        |  Import data protections                                     | READY  |                                                                                                                                                            |
 
 **Note:**
 Script file name follows pattern `<index>-<scope>-<resource>-<operation>.sh`.
@@ -86,7 +88,7 @@ The scope includes:
 
 * Cluster group
 
-* cluster
+* Cluster
 
 Operation includes:
 
@@ -122,7 +124,7 @@ Operation includes:
 
 2. Export the related resources from the SaaS stack by running scripts **002 - 030**.
 
-3. Offboard the managed clusters from the SaaS stack by running script [031-base-managed\_clusters-offboard.sh](./031-base-managed_clusters-offboard.sh). Set
+3. Export the managed clusters with script [031-base-managed\_clusters-export.sh](./031-base-managed_clusters-export.sh). Then offboard the managed clusters from the SaaS stack by running script [031-base-managed\_clusters-offboard.sh](./031-base-managed_clusters-offboard.sh). Set
     the environment variable `TMC_MC_FILTER` to export the specified clusters only.
 
     ```shell
@@ -130,7 +132,7 @@ Operation includes:
     export TMC_MC_FILTER="my_mc_1, my_mc_2"
     ```
 
-4. Offboard the attached non-NPC clusters from the SaaS stack by running script [032-base-attached\_non\_npc\_clusters-offboard.sh](./032-base-attached_non_npc_clusters-offboard). Set the environment variable `CLUSTER_NAME_FILTER` to export the specified attached clusters only.
+4. Export the managed cluster with script [032-base-attached\_non\_npc\_clusters-export.sh](./032-base-attached_non_npc_clusters-export.sh). Then offboard the attached non-NPC clusters from the SaaS stack by running script [032-base-attached\_non\_npc\_clusters-offboard.sh](./032-base-attached_non_npc_clusters-offboard). Set the environment variable `CLUSTER_NAME_FILTER` to export the specified attached clusters only.
 
     ```shell
     export CLUSTER_NAME_FILTER="attached1, attached2"
@@ -365,10 +367,10 @@ Operation includes:
 
 11. Imports resources `[clustergroup:git repo, clustergroup:kustomization, clustergroup:helm, clustergroup:helm-release]` by running scripts **044-047**.
 
-12. Run script [048-prepare-for-user-input.sh](./048-prepare-for-user-input.sh) to generate a Kubeconfig index file for the onboarding management clusters. Replace the path placeholders `/path/to/the/real/mc_kubeconfig/file` in the generated Kubeconfig index file.
+12. Run script [048-base-managed\_clusters-input\_from\_user.sh](./048-base-managed_clusters-input_from_user.sh) to generate a Kubeconfig index file for the onboarding management clusters. Replace the path placeholders `/path/to/the/real/mc_kubeconfig/file` in the generated Kubeconfig index file.
     Then run script [048-base-managed\_clusters-onboard.sh](./048-base-managed_clusters-onboard.sh) to onboard the exported clusters onto SM.
 
-13. Run script [049-prepare-for-user-input.sh](./049-prepare-for-user-input.sh) to generate a Kubeconfig index file for the attached clusters. Replace the path placeholders `/path/to/the/real/wc_kubeconfig/file` in the generated Kubeconfig index file.
+13. Run script [049-base-non\_npc\_clusters-input\_from_user.sh](./049-base-non_npc_clusters-input_from_user.sh) to generate a Kubeconfig index file for the attached clusters. Replace the path placeholders `/path/to/the/real/wc_kubeconfig/file` in the generated Kubeconfig index file.
 
     Then run script [049-base-non\_npc\_clusters-onboard.sh](./049-base-non_npc_clusters-onboard.sh) to onboard the attached clusters onto SM.
 
