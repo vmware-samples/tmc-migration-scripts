@@ -23,8 +23,6 @@ function prepare() {
         delete_agent_installs "$ns"
         # Uninstall the pre-installation.
         uninstall_stale_res "$ns"
-        # Clean the uninstall operation resource.
-        delete_agent_installs "$ns"
 
         # Delete the agent config it exists.
         delete_agent_config "$ns"
@@ -76,6 +74,8 @@ $(echo "$CA_CERTIFICATE" | sed 's/^/    /')
   allowedHostNames:
     - $DOMAIN
 EOF
+
+echo "Created AgentConfig tmc-agent-config in $namespace for $DOMAIN"
 }
 
 function uninstall_stale_res() {
@@ -188,13 +188,15 @@ while [ "$index" -lt "$total" ]; do
     KUBECONFIG_PATH=$(grep "^$name:" "$MC_KUBECONFIG_INDEX_FILE" | awk '{print $2}')
     export KUBECONFIG=$KUBECONFIG_PATH
 
-    # Prepare.
-    prepare
-
     # Register the cluster using cli.
-    if tanzu tmc mc get "$name" >/dev/null 2>&1; then
+    mc_status=$(tanzu tmc mc get tmc-sm-mgmt | yq .status.health)
+    if [[ $mc_status == "HEALTHY" ]]; then
+      echo "Reregister management cluster '$name'"
       tanzu tmc mc reregister "$name" --kubeconfig "$KUBECONFIG_PATH"
     else
+      echo "Register management cluster '$name'"
+      # Prepare.
+      prepare
       tanzu tmc mc register "$name" -f "$file" --kubeconfig "$KUBECONFIG_PATH"
     fi
 
