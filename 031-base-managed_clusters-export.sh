@@ -10,7 +10,7 @@ echo "Management cluster filter TMC_MC_FILTER=$TMC_MC_FILTER"
 
 if [[ -z "$TMC_MC_FILTER" ]]; then
     echo "Export all management clusters"
-    mkdir -p clusters && tanzu tmc mc list -o yaml > $MC_LIST_FILE
+    mkdir -p $MC_LIST_FOLDER && tanzu tmc mc list -o yaml > $MC_LIST_FILE
 else
     # Only export the data of the manage clusters defined in the environment variable "TMC_MC_FILTER".
     IFS=',' read -ra FILTERED_NAMES <<< "${TMC_MC_FILTER:-}"
@@ -19,7 +19,7 @@ else
 
     # Keep the raw data of all management clusters.
     # Process the data before using it later.
-    mkdir -p clusters && tanzu tmc mc list -o yaml \
+    mkdir -p $MC_LIST_FOLDER && tanzu tmc mc list -o yaml \
         | yq -o json '.managementClusters[]' \
         | jq -c 'select(.fullName.name | test("^('"$FILTER_PATTERN"')$"))' \
         | jq -s '{"managementClusters": .}' \

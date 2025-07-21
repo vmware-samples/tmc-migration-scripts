@@ -17,20 +17,13 @@ wait_for_unmanaged() {
 
   while true; do
     local output
-    output=$(tanzu tmc mc wc list -m $mgmt_cluster -o yaml)
-
-    # Exit if output is empty or only contains an empty array
-    if [[ -z "$output" || "$output" =~ "tanzuKubernetesClusters: \[\]" ]]; then
-      echo "Cluster list is empty. Exiting successfully."
-      return 0
-    fi
-
-    # Check whether all the workload clusters under the specified management cluster are unmanaged.
-    # This is a prerequisite of deregistering the management cluster. 
     local count
-    count=$(echo "$output" | yq '[(.tanzuKubernetesClusters[] | select(.spec.tmcManaged == true))] | length')
 
-    if [[ "$count" -eq 0 ]]; then
+    output=$(tanzu tmc cluster list -m $mgmt_cluster)
+    count=$(echo "$output" | tail -n +2 | grep -v '^[[:space:]]*$' | wc -l)
+
+    # Exit if no clusters are returned.
+    if [ "$count" -eq 0 ]; then
       echo "No tmcManaged clusters found. Exiting successfully."
       return 0
     fi
