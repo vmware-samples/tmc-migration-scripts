@@ -150,6 +150,8 @@ Operation includes:
 
     Run script [033-base-sm\_stack-connect.sh](./033-base-sm_stack-connect.sh) to create context for connecting the SM stack.
 
+    **Notes:** If MFA is enabled for the IDP, export this environment variable `export TMC_SM_IDP_MFA_ENABLED=true`.
+
 6. Import resources `[cluster group, workspace, roles]` into SM by running scripts **034-036**.
 
 7. \[👤 **USER ACTION REQUIRED**] List user actions needed for running scripts **037-039**.
