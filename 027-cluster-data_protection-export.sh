@@ -5,7 +5,7 @@ set +e
 # For test only
 #ORG_NAME="not-used"
 #CSP_URL="https://console-stg.tanzu.broadcom.com/csp/gateway/am/api/auth/api-tokens/authorize"
-#TANZU_API_TOKEN=${MY_CSP_TOKEN}
+#TANZU_API_TOKEN="${MY_CSP_TOKEN}"
 #TMC_ENDPOINT="trh.tmc-dev.tanzu.broadcom.com"
 #TMC_ENDPOINT="tanzumissioncontroluserorgstg.tmc-dev.tanzu.broadcom.com"
 
@@ -76,8 +76,3 @@ yq -r '.backupLocations[] | .spec.assignedGroups[] | select(.cluster) | .cluster
         echo ${dpcl} | yq -o yaml -P '.dataProtections' >> ${DPDIR}/dataprotection_clusters.yaml
     fi
 done
-
-# Support linux only, for MacOS, please use 'gsed' instead
-echo "Removing orgId from files ......"
-grep "orgId: " ${DPDIR}/* -r
-find ${DPDIR} -name "*.yaml" -exec sed -i '/orgId: /d' {} \;
