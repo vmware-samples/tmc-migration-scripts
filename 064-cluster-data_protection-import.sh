@@ -4,6 +4,7 @@ set +e
 
 ONBOARDED_CLUSTER_INDEX_FILE="data/clusters/onboarded-clusters-name-index"
 TEMPFILE=/tmp/_temp_dp_file_$(date +%s)
+TEMPKUBECONFIG=${TEMPFILE}_kubeconfig
 DPDIR=data/data-protection
 if [ ! -d "${DPDIR}" ]; then
     echo "Dir %{DPDIR} doesn't exist!"
@@ -11,8 +12,16 @@ if [ ! -d "${DPDIR}" ]; then
 fi
 
 TANZU=tanzu
+KUBECTL=kubectl
 #DRYRUN="--dry-run"
 DRYRUN=
+
+# Support linux only, for MacOS, please use 'gsed' instead
+echo "Updating orgId in files ......"
+ORGID=$(TANZU tmc management-cluster get attached | yq ".fullName.orgId")
+grep "orgId: " ${DPDIR}/* -r
+find ${DPDIR} -name "*.yaml" -exec sed -i "s/orgId: .*/orgId: ${ORGID}/g" {} \;
+grep "orgId: " ${DPDIR}/* -r
 
 function create_dp_resources() {
     local filename=$1
@@ -36,7 +45,7 @@ function create_dp_resources() {
     do
         echo "==> Loading ${idx}/${total} in ${filename} ......"
         # Do we need to delete '.meta'?
-        local elem=$(yq -o yaml ".${keyname}[${idx}]" ${DPDIR}/${filename} | yq -o yaml 'del(.status)')
+        local elem=$(yq -o yaml ".${keyname}[${idx}]" ${DPDIR}/${filename} | yq -o yaml 'del(.meta)' | yq -o yaml 'del(.status)')
         if [[ "${elem}" == "null" ]]; then
             break
         fi
@@ -59,11 +68,16 @@ function create_dp_resources() {
         for ((trynum = 0; trynum < 60; trynum += 1))
         do
             retmsg=$(${TANZU} tmc data-protection ${dpcmd} create ${SCOPE} -f ${TEMPFILE} ${DRYRUN} 2>&1)
-            if [[ ${retmsg} != *"Data Protection has not been enabled for the cluster"* ]] && [[ ${retmsg} != *"is not yet available for backup"* ]]; then
-                echo " ================== >>>>>>>>>>> ${retmsg}"
+            if [[ ${retmsg} == *"code = AlreadyExists"* ]]; then
+                retmsg=$(${TANZU} tmc data-protection ${dpcmd} update ${SCOPE} -f ${TEMPFILE} ${DRYRUN} 2>&1)
+                echo "==> update: ${retmsg}"
                 break
+            elif [[ ${retmsg} != *"Data Protection has not been enabled for the cluster"* ]] && [[ ${retmsg} != *"is not yet available for backup"* ]]; then
+                echo "==> error: ${retmsg}"
+                break
+            else
+                echo "==> message: ${retmsg}"
             fi
-            echo ${retmsg}
             echo "try again ${trynum}/60 ..."
             sleep 10
         done
@@ -104,9 +118,68 @@ function enable_dataprotection() {
     done
 }
 
-# Load backup location for both org and clsuter
+function create_old_bsl() {
+    local filename=$1
+    if [ ! -f ${DPDIR}/${filename} ]; then
+        echo "==> No file ${filename}"
+        return
+    fi
+    local total=$(yq -r ".totalCount" ${DPDIR}/${filename})
+
+    if [[ "${total}" == "0" ]]; then
+        echo "==> No data in ${filename}"
+        return
+    fi
+    echo "************************************************************************"
+    echo "Start creating bsl in ${filename}, total number is ${total}"
+    echo "************************************************************************"
+    for ((idx = 0; idx < $total; idx += 1))
+    do
+        echo "==> Loading ${idx}/${total} in ${filename} ......"
+        # Do we need to delete '.meta'?
+        local elem=$(yq -o yaml ".backupLocations[${idx}]" ${DPDIR}/${filename} | yq -o yaml 'del(.status)')
+        if [[ "${elem}" == "null" ]]; then
+            break
+        fi
+        # Just import cluster specific backup/schedule
+        fullname=$(echo "${elem}" | yq '.fullName | .managementClusterName + "." + .provisionerName + "." + .clusterName')
+        if ! grep -qx "${fullname}" "$ONBOARDED_CLUSTER_INDEX_FILE"; then
+            echo "Cluster ${fullname} doesn't exist, just skip it"
+            continue
+        fi
+        # Save kubeconfig
+        clname=$(echo "${elem}" | yq '.fullName.clusterName')
+        mcname=$(echo "${elem}" | yq '.fullName.managementClusterName')
+        provname=$(echo "${elem}" | yq '.fullName.provisionerName')
+        ${TANZU} tmc cluster kubeconfig get ${clname} -m ${mcname} -p ${provname} > ${TEMPKUBECONFIG}
+        # Create new BSL
+        bslname=$(echo "${elem}" | yq '.fullName.name')
+        bslprefix=$(echo "${elem}" | yq '.spec.prefix')
+        for ((trynum = 0; trynum < 30; trynum += 1))
+        do
+            retmsg=$(${KUBECTL} --kubeconfig=${TEMPKUBECONFIG} get bsl -n velero ${bslname} -o yaml)
+            newbslname=$(echo "${retmsg}" | yq ".metadata.name")
+            if [[ "${newbslname}" == "${bslname}" ]]; then
+                echo "${retmsg}" | yq -o yaml 'del(.status)' | yq -o yaml 'del(.metadata.labels)' > ${TEMPFILE}
+                # Do we need to append a timestampe to the name? to avoid conflict.
+                yq -i ".metadata.name=\"${bslname}-old\"" ${TEMPFILE}
+                yq -i ".spec.objectStorage.prefix=\"${bslprefix}\"" ${TEMPFILE}
+                cat ${TEMPFILE}
+                ${KUBECTL} --kubeconfig=${TEMPKUBECONFIG} apply -f ${TEMPFILE}
+                rm -f ${TEMPFILE}
+                break
+            fi
+            echo "try again ${trynum}/60 ..."
+            sleep 10
+        done
+        rm -f ${TEMPKUBECONFIG}
+    done
+}
+
+# Load backup location for both org and cluster
 create_dp_resources "backup_location_org.yaml" "backupLocations" "backup-location" ""
-# It seems we don't need create location for cluster, because clusters are in org already
+# It seems we don't need create location for cluster, because clusters are in org already.
+# And current backup-location create API doesn't support create cluser-backup-location.
 #create_dp_resources "backup_location_cluster.yaml" "backupLocations" "backup-location"
 
 # Enable dataprotection on clustergroups and clusters
@@ -117,10 +190,8 @@ enable_dataprotection "dataprotection_clusters.yaml" "cluster"
 create_dp_resources "schedule-clustergroup.yaml" "schedules" "schedule" "clustergroup"
 create_dp_resources "schedule-cluster.yaml" "schedules" "schedule" "cluster"
 
-# Load backup
-create_dp_resources "backup.yaml" "backups" "backup" ""
-
-# Load restore
-create_dp_resources "restore.yaml" "restores" "restore" ""
+# Create old BSL
+create_old_bsl "backup_location_cluster.yaml"
 
 rm -f ${TEMPFILE}
+rm -f ${TEMPKUBECONFIG}
