@@ -7,7 +7,7 @@ TEMPFILE=/tmp/_temp_dp_file_$(date +%s)
 TEMPKUBECONFIG=${TEMPFILE}_kubeconfig
 DPDIR=data/data-protection
 if [ ! -d "${DPDIR}" ]; then
-    echo "Dir %{DPDIR} doesn't exist!"
+    echo "Dir ${DPDIR} doesn't exist!"
     exit 1
 fi
 
@@ -169,7 +169,7 @@ function create_old_bsl() {
                 rm -f ${TEMPFILE}
                 break
             fi
-            echo "try again ${trynum}/60 ..."
+            echo "try again ${trynum}/30 ..."
             sleep 10
         done
         rm -f ${TEMPKUBECONFIG}
@@ -179,7 +179,7 @@ function create_old_bsl() {
 # Load backup location for both org and cluster
 create_dp_resources "backup_location_org.yaml" "backupLocations" "backup-location" ""
 # It seems we don't need create location for cluster, because clusters are in org already.
-# And current backup-location create API doesn't support create cluser-backup-location.
+# And current backup-location create API doesn't support create cluster-backup-location.
 #create_dp_resources "backup_location_cluster.yaml" "backupLocations" "backup-location"
 
 # Enable dataprotection on clustergroups and clusters
