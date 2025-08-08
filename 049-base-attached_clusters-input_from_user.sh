@@ -1,6 +1,6 @@
 #!/bin/bash
 
-INPUT_CLUSTERS_FILE=data/clusters/attached_non_npc_clusters.yaml
+INPUT_CLUSTERS_FILE=data/clusters/attached_clusters.yaml
 WC_KUBECONFIG_INDEX_FILE=data/clusters/attached-wc-kubeconfig-index-file
 PLACEHOLDER_TEXT="/path/to/the/real/wc_kubeconfig/file"
 

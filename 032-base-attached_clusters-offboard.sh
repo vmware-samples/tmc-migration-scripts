@@ -1,9 +1,9 @@
 #!/bin/bash
 
 MC_LIST_FOLDER=data/clusters
-INPUT_CLUSTERS_FILE=$MC_LIST_FOLDER/attached_non_npc_clusters.yaml
+INPUT_CLUSTERS_FILE=$MC_LIST_FOLDER/attached_clusters.yaml
 
-#With the exported data, detach all the non-NPC attached clusters with the following command. Unhealthy attached clusters will try to be forcefully detached.
+#With the exported data, detach all the attached clusters with the following command. Unhealthy attached clusters will try to be forcefully detached.
 
 # Iterate through clusters
 index=0
