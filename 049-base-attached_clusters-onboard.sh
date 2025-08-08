@@ -1,6 +1,6 @@
 #!/bin/bash
 CLUSTER_DATA_DIR=data/clusters
-INPUT_CLUSTERS_FILE=$CLUSTER_DATA_DIR/attached_non_npc_clusters.yaml
+INPUT_CLUSTERS_FILE=$CLUSTER_DATA_DIR/attached_clusters.yaml
 WC_KUBECONFIG_INDEX_FILE=$CLUSTER_DATA_DIR/attached-wc-kubeconfig-index-file
 PLACEHOLDER_TEXT="/path/to/the/real/wc_kubeconfig/file"
 
@@ -11,7 +11,7 @@ if grep -q "$PLACEHOLDER_TEXT" "$WC_KUBECONFIG_INDEX_FILE"; then
 fi
 
 
-# Attach non-NPC clusters.
+# Attach clusters.
 ONBOARDED_CLUSTER_INDEX_FILE="$CLUSTER_DATA_DIR/onboarded-clusters-name-index"
 
 ATTACHED_CLUSTER_DIR=$CLUSTER_DATA_DIR/attached
