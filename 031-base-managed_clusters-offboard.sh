@@ -57,6 +57,7 @@ for name in $MATCHED_MC; do
         echo "✅ All clusters unmanaged or none found under management cluster $name."
     else
         echo "⏰ Timeout waiting for all workload clusters unmanaged from management cluster $name."
+        exit 1
     fi
 
     echo "Deregister management cluster $name"
