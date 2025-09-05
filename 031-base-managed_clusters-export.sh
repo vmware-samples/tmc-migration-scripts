@@ -1,5 +1,9 @@
 #!/bin/bash
 
+source "$(dirname "${BASH_SOURCE[0]}")"/utils/context.sh
+
+use_tmc_saas_context
+
 MC_LIST_FOLDER=data/clusters
 MC_LIST_FILE=$MC_LIST_FOLDER/mc_list.yaml
 

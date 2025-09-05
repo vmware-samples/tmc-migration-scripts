@@ -1,22 +1,48 @@
 #!/bin/bash
 
+source "$(dirname "${BASH_SOURCE[0]}")"/utils/log.sh
+
 # export TANZU_API_TOKEN=<CSP-TOKEN>
 # export ORG_NAME=tanzumissioncontroluserorgstg
 # export TANZU_CLI_CEIP_OPT_IN_PROMPT_ANSWER=no
 
+if [ -z "$TANZU_API_TOKEN" ]; then
+  log error "❌ TANZU_API_TOKEN environment variable is not set."
+  exit 1
+fi
+
+if [[ -z "$TMC_ENDPOINT" && -z "$ORG_NAME" ]]; then
+  log error "❌ Environment variables TMC_ENDPOINT or ORG_NAME is not set."
+  exit 1
+fi
+
+
+# The URL can be overridden by environment variable, e.g for dev stack
+# export TMC_ENDPOINT={{ORG_NAME}}.tmc-dev.tanzu.broadcom.com
+if [ -z "$TMC_ENDPOINT" ]; then
+  TMC_ENDPOINT="${ORG_NAME}.tanzu.broadcom.com"
+fi
+
+# The CSP_URL can be overridden by environment variable, e.g for stg CSP
+#  export CSP_URL=https://console-stg.tanzu.broadcom.com/csp/gateway/am/api/auth/api-tokens/authorize
+if [ -z "$CSP_URL" ]; then
+  CSP_URL="https://console.tanzu.broadcom.com/csp/gateway/am/api/auth/api-tokens/authorize"
+fi
 
 ## Create CLI context.
-export TMC_CONTEXT=migration
+TMC_CONTEXT=migration
 
 # Clear the context first if it exists.
 tanzu context delete ${TMC_CONTEXT} -y
 
-# For production.
-#tanzu context create ${TMC_CONTEXT} --type tmc --endpoint $ORG_NAME.tmc.tanzu.broadcom.com:443
-
 tanzu config eula accept
-# For experiments.
-tanzu context create ${TMC_CONTEXT} --type tmc --staging --endpoint $ORG_NAME.tmc-dev.tanzu.broadcom.com:443
+
+STAGING=""
+if [[ $CSP_URL == *"console-stg.tanzu.broadcom.com"* ]]; then
+  STAGING="--staging"
+fi
+
+tanzu context create ${TMC_CONTEXT} --type tmc $STAGING --endpoint $TMC_ENDPOINT:443
 
 
 ## Alternative option:
@@ -24,8 +50,11 @@ tanzu context create ${TMC_CONTEXT} --type tmc --staging --endpoint $ORG_NAME.tm
 #export TOKEN_URL=https://console.tanzu.broadcom.com/csp/gateway/am/api/auth/api-tokens/authorize
 #export REFRESH_TOKEN=<CSP Token>
 
-export TMC_ACCESS_TOKEN="$(curl -X POST $TOKEN_URL \
+echo ""
+log info "Fetch the access token:"
+
+export TMC_ACCESS_TOKEN="$(curl -s -X POST $CSP_URL \
   -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d "refresh_token=$REFRESH_TOKEN" | jq .access_token)"
+  -d "refresh_token=$TANZU_API_TOKEN" | jq -r .access_token)"
 
 echo $TMC_ACCESS_TOKEN
