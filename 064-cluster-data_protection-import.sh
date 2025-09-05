@@ -18,7 +18,7 @@ DRYRUN=
 
 # Support linux only, for MacOS, please use 'gsed' instead
 echo "Updating orgId in files ......"
-ORGID=$(TANZU tmc management-cluster get attached | yq ".fullName.orgId")
+ORGID=$(${TANZU} tmc management-cluster get attached | yq ".fullName.orgId")
 grep "orgId: " ${DPDIR}/* -r
 find ${DPDIR} -name "*.yaml" -exec sed -i "s/orgId: .*/orgId: ${ORGID}/g" {} \;
 grep "orgId: " ${DPDIR}/* -r
