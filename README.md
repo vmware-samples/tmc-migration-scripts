@@ -145,7 +145,6 @@ Operation includes:
     export TMC_SELF_MANAGED_USERNAME=admin-user@customer.com
     export TMC_SELF_MANAGED_PASSWORD=Fake@Pass
     export TMC_SELF_MANAGED_DNS=tmc.tanzu.io
-    export TMC_SM_CONTEXT=tmc-sm
     ```
 
     Run script [033-base-sm\_stack-connect.sh](./033-base-sm_stack-connect.sh) to create context for connecting the SM stack.

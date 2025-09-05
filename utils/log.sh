@@ -24,17 +24,17 @@ log() {
 
     case "$level" in
         info)
-            echo -e "$timestamp INFO  $message"
+            echo -e "$timestamp INF $message"
             ;;
         warn | warning)
-            echo -e "$timestamp ${COLOR_WARN}WARNING${COLOR_RESET} $message"
+            echo -e "$timestamp ${COLOR_WARN}WRN${COLOR_RESET} $message"
             ;;
         err | error)
-            echo -e "$timestamp ${COLOR_ERROR}ERROR${COLOR_RESET} $message"
+            echo -e "$timestamp ${COLOR_ERROR}ERR${COLOR_RESET} $message"
             ;;
         debug)
             if [ $DEBUG != "off" ]; then
-                echo -e "$timestamp ${COLOR_DEBUG}DEBUG $message${COLOR_RESET}" 1>&2
+                echo -e "$timestamp ${COLOR_DEBUG}DBG $message${COLOR_RESET}" 1>&2
             fi
             ;;
         *)
@@ -48,7 +48,7 @@ say_bye() {
         log info "$* completed successfully! ${COLOR_SUCCESS}✔${COLOR_RESET}"
     else
         log error "$* exited with an error. ${COLOR_ERROR}✖${COLOR_RESET}"
-    fi 
+    fi
 }
 
 register_last_words() {

@@ -1,4 +1,7 @@
 #!/bin/bash
+source "$(dirname "${BASH_SOURCE[0]}")"/utils/log.sh
+source "$(dirname "${BASH_SOURCE[0]}")"/utils/context.sh
+source "$(dirname "${BASH_SOURCE[0]}")"/utils/check-cluster.sh
 
 CLUSTER_DATA_DIR="data/clusters"
 MC_LIST_YAML_FILE=$CLUSTER_DATA_DIR/mc_list.yaml
@@ -6,63 +9,85 @@ MC_KUBECONFIG_INDEX_FILE=$CLUSTER_DATA_DIR/mc-kubeconfig-index-file
 REGISTERED_FILE=$CLUSTER_DATA_DIR/mc_registered.txt
 PLACEHOLDER_TEXT="/path/to/the/real/mc_kubeconfig/file"
 
-# If the $MC_KUBECONFIG_INDEX_FILE file is NOT completely updated, then stop to proceed.
-if grep -q "$PLACEHOLDER_TEXT" "$MC_KUBECONFIG_INDEX_FILE"; then
-  echo "⚠️  Warning: Placeholder text '$PLACEHOLDER_TEXT' found in $MC_KUBECONFIG_INDEX_FILE. Please replace it."
-  exit 1
-fi
+MIN_VERSION="1.28.0"
+ONBOARDED_CLUSTER_INDEX_FILE="$CLUSTER_DATA_DIR/onboarded-clusters-name-index"
+
+function init () {
+  # If the $MC_KUBECONFIG_INDEX_FILE file is NOT completely updated, then stop to proceed.
+  if grep -q "$PLACEHOLDER_TEXT" "$MC_KUBECONFIG_INDEX_FILE"; then
+    log error "⚠️  Placeholder text '$PLACEHOLDER_TEXT' found in $MC_KUBECONFIG_INDEX_FILE. Please replace it."
+    exit 1
+  fi
+
+  use_tmc_sm_context
+}
 
 # Clean up registration resources and recreate the config.
-function prepare() {
-    namespaces=$(kubectl get ns --no-headers -o custom-columns=":metadata.name" | grep '^svc-tmc-')
+function prepare_for_vks() {
+  namespaces=$(kubectl get ns --no-headers -o custom-columns=":metadata.name" | grep '^svc-tmc-')
 
-    for ns in $namespaces; do
-        echo "Checking namespace: $ns"
+  for ns in $namespaces; do
+    log info "Checking namespace: $ns"
 
-        # Delete the agentinstall if it exists.
-        delete_agent_installs "$ns"
-        # Uninstall the pre-installation.
-        uninstall_stale_res "$ns"
+    # Delete the agentinstall if it exists.
+    delete_agent_installs "$ns"
 
-        # Delete the agent config it exists.
-        delete_agent_config "$ns"
-        # Create agent config.
-        create_agent_config "$ns"
-    done
+    # Uninstall the pre-installation.
+    uninstall_stale_res "$ns"
+
+    # Prepare agent config
+    prepare_agent_config "$ns"
+  done
+}
+
+function prepare_agent_config() {
+  local ns="$1"
+
+  if [[ -z $ns ]]; then
+    ns=$(kubectl get ns -o custom-columns=":metadata.name" | grep '^svc-tmc-' | head -n 1)
+  fi
+
+  # Delete the agent config it exists.
+  delete_agent_config "$ns"
+
+  # Create agent config.
+  create_agent_config "$ns"
 }
 
 function delete_agent_config() {
-    local ns="$1"
+  local ns="$1"
 
-    # Check and delete AgentConfig if exists
-    if kubectl get agentconfig -n "$ns" &>/dev/null; then
-        echo "Deleting AgentConfig(s) in $ns..."
-        kubectl delete agentconfig --all -n "$ns"
-    else
-        echo "No AgentConfig in $ns"
-    fi
+  # Check and delete AgentConfig if exists
+  if kubectl get agentconfig -n "$ns" &>/dev/null; then
+    log info "Deleting AgentConfig(s) in $ns..."
+    kubectl delete agentconfig --all -n "$ns"
+  else
+    log info "No AgentConfig in $ns"
+  fi
 }
 
-function delete_agent_installs(){
-    local ns="$1"
+function delete_agent_installs() {
+  local ns="$1"
 
-    # Check and delete AgentInstall if exists
-    if kubectl get agentinstall -n "$ns" &>/dev/null; then
-        echo "🧹 Deleting AgentInstall(s) in $ns..."
-        kubectl delete agentinstall --all -n "$ns"
-    else
-        echo "No AgentInstall in $ns"
-    fi
+  # Check and delete AgentInstall if exists
+  if kubectl get agentinstall -n "$ns" &>/dev/null; then
+    log info "🧹 Deleting AgentInstall(s) in $ns..."
+    kubectl delete agentinstall --all -n "$ns"
+  else
+    log info "No AgentInstall in $ns"
+  fi
 }
 
 function create_agent_config() {
-    local namespace="$1"
+  local namespace="$1"
+  local TMC_SM_CONTEXT="tmc-sm"
 
-    ENDPOINT=$(tanzu context get $TMC_SM_CONTEXT | yq .globalOpts.endpoint)
-    DOMAIN=$(echo "$ENDPOINT" | cut -d':' -f1)
-    CA_CERTIFICATE=$(openssl s_client -connect $ENDPOINT -showcerts </dev/null 2>/dev/null | openssl x509 -outform PEM)
+  local ENDPOINT DOMAIN CA_CERTIFICATE
+  ENDPOINT=$(tanzu context get "$TMC_SM_CONTEXT" | yq .globalOpts.endpoint)
+  DOMAIN=$(echo "$ENDPOINT" | cut -d':' -f1)
+  CA_CERTIFICATE=$(openssl s_client -connect $ENDPOINT -showcerts </dev/null 2>/dev/null | openssl x509 -outform PEM)
 
-    cat <<EOF | kubectl apply -f -
+  cat <<EOF | kubectl apply -f -
 apiVersion: "installers.tmc.cloud.vmware.com/v1alpha1"
 kind: "AgentConfig"
 metadata:
@@ -75,15 +100,15 @@ $(echo "$CA_CERTIFICATE" | sed 's/^/    /')
     - $DOMAIN
 EOF
 
-echo "Created AgentConfig tmc-agent-config in $namespace for $DOMAIN"
+  log info "Created AgentConfig tmc-agent-config in $namespace for $DOMAIN"
 }
 
 function uninstall_stale_res() {
-    local namespace="$1"
+  local namespace="$1"
 
-    echo "Apply uninstall operation"
+  log info "Apply uninstall operation"
 
-    cat <<EOF | kubectl apply -f -
+  cat <<EOF | kubectl apply -f -
 apiVersion: installers.tmc.cloud.vmware.com/v1alpha1
 kind: AgentInstall
 metadata:
@@ -93,39 +118,43 @@ spec:
   operation: UNINSTALL
 EOF
 
-wait_for_pods_cleaned $namespace
+  wait_for_pods_cleaned $namespace
+
+  # Wait until the agent installer config is deleted by the tmc-agent-installer
+  log info "Wait until the uninstall operation is successfully completed"
+  kubectl wait --for=delete agentinstall/tmc-agent-installer-config -n $namespace --timeout 3m
 }
 
 function wait_for_pods_cleaned() {
-    local namespace="$1"
+  local namespace="$1"
 
-    TIMEOUT_SECONDS=300  # 5 minutes
-    SLEEP_INTERVAL=5
+  TIMEOUT_SECONDS=300 # 5 minutes
+  SLEEP_INTERVAL=5
 
-    echo "Waiting for all pods in namespace '$namespace' to terminate..."
+  log info "Waiting for all pods in namespace '$namespace' to terminate..."
 
-    elapsed=0
-    while true; do
-        # Get number of pods
-        pod_count=$(kubectl get pods -n "$namespace" --no-headers 2>/dev/null | grep -v '^tmc-agent-installer-' | wc -l)
+  elapsed=0
+  while true; do
+    # Get number of pods
+    pod_count=$(kubectl get pods -n "$namespace" --no-headers 2>/dev/null | grep -v '^tmc-agent-installer-' | wc -l)
 
-        # If no pods, break the loop
-        if [[ "$pod_count" -eq 0 ]]; then
-            echo "All pods in namespace '$namespace' are gone."
-            break
-        fi
+    # If no pods, break the loop
+    if [[ "$pod_count" -eq 0 ]]; then
+      log info "All pods in namespace '$namespace' are gone."
+      break
+    fi
 
-        if [[ "$elapsed" -ge "$TIMEOUT_SECONDS" ]]; then
-            echo "Timeout reached. Still $pod_count pod(s) remaining in namespace '$NAMESPACE'."
-            exit 1
-        fi
+    if [[ "$elapsed" -ge "$TIMEOUT_SECONDS" ]]; then
+      log info "Timeout reached. Still $pod_count pod(s) remaining in namespace '$namespace'."
+      exit 1
+    fi
 
-        echo "$pod_count pod(s) remaining... waited ${elapsed}s"
+    log info "$pod_count pod(s) remaining... waited ${elapsed}s"
 
-        sleep "$SLEEP_INTERVAL"
-        ((elapsed+=SLEEP_INTERVAL))
+    sleep "$SLEEP_INTERVAL"
+    ((elapsed += SLEEP_INTERVAL))
 
-    done
+  done
 }
 
 wait_for_mc_healthy() {
@@ -133,17 +162,18 @@ wait_for_mc_healthy() {
   local INTERVAL=10
   local TIMEOUT=600
 
-  echo "Waiting for the management cluster '$mgmt_cluster' to become healthy"
+  log info "Waiting for the management cluster '$mgmt_cluster' to become healthy"
 
   local start_time
   start_time=$(date +%s)
 
   while true; do
-    local healthy_status=$(tanzu tmc mc get $mgmt_cluster -o yaml | yq .status.health)
+    local health
+    health=$(tanzu tmc mc get $mgmt_cluster -o yaml | yq '.status.health // "UNKNOWN"')
 
     # Exit if the management cluster has already been healthy.
-    if [[ $healthy_status == "HEALTHY" ]]; then
-      echo "Management cluster '$mgmt_cluster' is HEALTHY"
+    if [[ $health == "HEALTHY" ]]; then
+      log info "Management cluster '$mgmt_cluster' is HEALTHY"
       return 0
     fi
 
@@ -151,68 +181,101 @@ wait_for_mc_healthy() {
     current_time=$(date +%s)
     local elapsed=$((current_time - start_time))
 
-    if (( elapsed >= TIMEOUT )); then
-      echo "Timeout reached after $elapsed seconds. Exiting with failure."
+    if ((elapsed >= TIMEOUT)); then
+      log info "Timeout reached after $elapsed seconds. Exiting with failure."
       return 1
     fi
 
-    echo "Cluster healthy status is '$healthy_status'. Waiting $INTERVAL seconds..."
+    log info "Management cluster healthy status is '$health'. Waiting $INTERVAL seconds..."
     sleep "$INTERVAL"
   done
 }
 
 
-# Reset tracking file
-: > "$REGISTERED_FILE"
+function onboard_mgmt_clusters() {
+  # Reset tracking file
+  : >"$REGISTERED_FILE"
 
-# Iterate through clusters
-index=0
-total=$(yq '.managementClusters | length' $MC_LIST_YAML_FILE)
+  # Iterate through clusters
+  local total
+  total=$(yq '.managementClusters | length' $MC_LIST_YAML_FILE)
 
-while [ "$index" -lt "$total" ]; do
-  health=$(yq ".managementClusters[$index].status.health" $MC_LIST_YAML_FILE)
-  name=$(yq ".managementClusters[$index].fullName.name" $MC_LIST_YAML_FILE)
+  for ((index=0; index<total; index+=1)); do
+    local name health
+    name=$(yq ".managementClusters[$index].fullName.name" $MC_LIST_YAML_FILE)
+    health=$(yq ".managementClusters[$index].status.health" $MC_LIST_YAML_FILE)
 
-  if [ "$health" == "HEALTHY" ] && [[ "$name" != "aks" && "$name" != "eks" && "$name" != "attached" ]]; then
-    orgId=$(yq ".managementClusters[$index].fullName.orgId" $MC_LIST_YAML_FILE)
-    file="$CLUSTER_DATA_DIR/mc_${orgId}_${name}.yaml"
+    if [ "$health" == "HEALTHY" ] && [[ "$name" != "aks" && "$name" != "eks" && "$name" != "attached" ]]; then
+      orgId=$(yq ".managementClusters[$index].fullName.orgId" $MC_LIST_YAML_FILE)
+      file="$CLUSTER_DATA_DIR/mc_${orgId}_${name}.yaml"
 
-    echo "Processing mc $name [health=$health]"
+      log info "Processing mc $name [health=$health]"
 
-    # Save cluster data without .status field.
-    yq "del(.managementClusters[$index].status) | .managementClusters[$index]" $MC_LIST_YAML_FILE > "$file"
-    # Remove orgId.
-    yq -i 'del(.fullName.orgId)' $file
+      # Save cluster data without .status field.
+      yq "del(.managementClusters[$index].status) | .managementClusters[$index]" $MC_LIST_YAML_FILE >"$file"
+      # Remove orgId.
+      yq -i 'del(.fullName.orgId)' $file
 
-    # Look up the kubeconfig file path from the provided index file
-    KUBECONFIG_PATH=$(grep "^$name:" "$MC_KUBECONFIG_INDEX_FILE" | awk '{print $2}')
-    export KUBECONFIG=$KUBECONFIG_PATH
+      # Look up the kubeconfig file path from the provided index file
+      local KUBECONFIG_PATH
+      KUBECONFIG_PATH=$(grep "^$name:" "$MC_KUBECONFIG_INDEX_FILE" | awk '{print $2}')
 
-    # Register the cluster using cli.
-    mc_status=$(tanzu tmc mc get tmc-sm-mgmt | yq .status.health)
-    if [[ $mc_status == "HEALTHY" ]]; then
-      echo "Reregister management cluster '$name'"
-      tanzu tmc mc reregister "$name" --kubeconfig "$KUBECONFIG_PATH"
-    else
-      echo "Register management cluster '$name'"
-      # Prepare.
-      prepare
-      tanzu tmc mc register "$name" -f "$file" --kubeconfig "$KUBECONFIG_PATH"
+      export KUBECONFIG=$KUBECONFIG_PATH
+
+      # Register the cluster using cli.
+      local provider proxy_name image_registry
+      provider=$(yq .spec.kubernetesProviderType "$file")
+      proxy_name=$(yq .spec.proxyName "$file")
+      image_registry=$(yq .spec.imageRegistry "$file")
+
+      local MGMT_YAML phase health
+      MGMT_YAML=$(tanzu tmc mc get $name)
+      phase=$(echo "$MGMT_YAML" | yq '.status.phase // "UNKNOWN"')
+      health=$(echo "$MGMT_YAML" | yq '.status.health // "UNKNOWN"')
+
+      set -e
+      if [[ "$health" == "HEALTHY" ]]; then
+        log info "Management cluster '$name' is HEALTHY, skip onboarding management cluster"
+      elif [[ $health == "DISCONNECTED" || "$phase" == "PENDING" ]]; then
+        if [[ $provider == "VMWARE_TANZU_KUBERNETES_GRID_SERVICE" ]]; then
+          log info "Setup configurations for management cluster $name"
+          prepare_agent_config
+        fi
+
+        log info "Reregister management cluster '$name'"
+        tanzu tmc mc reregister "$name" --use-proxy --proxy-name "$proxy_name" --image-registry "$image_registry" --kubeconfig "$KUBECONFIG_PATH"
+      else
+        if [[ "$phase" == "READY_TO_ATTACH" ]]; then
+          log info "Deregister management cluster '$name'"
+          tanzu tmc mc deregister "$name" --kubeconfig "$KUBECONFIG_PATH" --force
+        fi
+
+        if [[ $provider == "VMWARE_TANZU_KUBERNETES_GRID_SERVICE" ]]; then
+          # Prepare.
+          log info "Setup configurations for management cluster $name"
+          prepare_for_vks
+        fi
+
+        log info "Register management cluster '$name'"
+        tanzu tmc mc register "$name" -f "$file" --kubeconfig "$KUBECONFIG_PATH"
+      fi
+      set +e
+
+      if [[ "$health" != "HEALTHY" ]]; then
+        # Wait for the registered MC is healthy.
+        if ! wait_for_mc_healthy "$name"; then
+          log error "Management cluster '$name' is not ready, exit ..."
+          exit 1
+        fi
+      fi
+
+      # Track the name of successfully registered management cluster for later use.
+      if ! grep -qxF "$name" "$REGISTERED_FILE"; then
+        echo "$name" >>"$REGISTERED_FILE"
+      fi
     fi
-
-    # Wait for the registered MC is healthy.
-    wait_for_mc_healthy $name
-    
-    # Track the name of successfully registered management cluster for later use.
-    echo "$name" >> "$REGISTERED_FILE"
-  fi
-
-  index=$((index + 1))
-done
-
-# Mange the workload clusters.
-MIN_VERSION="1.28.0"
-ONBOARDED_CLUSTER_INDEX_FILE="$CLUSTER_DATA_DIR/onboarded-clusters-name-index"
+  done
+}
 
 # Strip v prefix and metadata from version (e.g., v1.29.4+ -> 1.29.4)
 sanitize_version() {
@@ -224,13 +287,18 @@ compare_versions() {
   [ "$(printf "%s\n%s" "$2" "$1" | sort -V | head -n1)" = "$2" ]
 }
 
-# Read management cluster name from $REGISTERED_FILE.
-while IFS= read -r mc_name; do
+function onboard_workload_clusters () {
+  # Ensure the index file exists before grepping
+  [ -f "$ONBOARDED_CLUSTER_INDEX_FILE" ] || touch "$ONBOARDED_CLUSTER_INDEX_FILE"
+
+  # Read management cluster name from $REGISTERED_FILE.
+  while IFS= read -r mc_name; do
+    local wc_file
     wc_file="$CLUSTER_DATA_DIR/wc_of_${mc_name}.yaml"
-    
+
     if [[ ! -f "$wc_file" ]]; then
-        echo "File $wc_file not found. Skipping..."
-        continue
+      log warn "File $wc_file not found. Skipping..."
+      continue
     fi
 
     # Remove orgId first
@@ -239,31 +307,55 @@ while IFS= read -r mc_name; do
     # Count how many workload clusters exist in the file
     cluster_count=$(yq eval '.clusters | length' "$wc_file")
 
-    for i in $(seq 0 $((cluster_count - 1))); do
-        version=$(yq eval ".clusters[$i].spec.topology.version" "$wc_file")
-        if ! compare_versions "$clean_version" "$MIN_VERSION"; then
-          echo "Skipping: $version is NOT supported (< v$MIN_VERSION)"
-        fi
-        name=$(yq eval ".clusters[$i].fullName.name" "$wc_file")
-        mgmt=$(yq eval ".clusters[$i].fullName.managementClusterName" "$wc_file")
-        prov=$(yq eval ".clusters[$i].fullName.provisionerName" "$wc_file")
-        group=$(yq eval ".clusters[$i].spec.clusterGroupName" "$wc_file")
-        proxy=$(yq eval ".clusters[$i].spec.proxyName // \"\"" "$wc_file")
-        registry=$(yq eval ".clusters[$i].spec.imageRegistry // \"\"" "$wc_file")
-        
-        # Build the command
-        cmd="tanzu tmc mc wc manage \"$name\" -m \"$mgmt\" -p \"$prov\" --cluster-group \"$group\""
-        [[ -n "$proxy" && "$proxy" != "null" ]] && cmd+=" --proxy-name \"$proxy\""
-        [[ -n "$registry" && "$registry" != "null" ]] && cmd+=" --image-registry \"$registry\""
+    for ((i=0; i<cluster_count; i+=1)); do
+      local name mgmt prov group proxy registry
+      name=$(yq eval ".clusters[$i].fullName.name" "$wc_file")
+      mgmt=$(yq eval ".clusters[$i].fullName.managementClusterName" "$wc_file")
+      prov=$(yq eval ".clusters[$i].fullName.provisionerName" "$wc_file")
+      group=$(yq eval ".clusters[$i].spec.clusterGroupName" "$wc_file")
+      proxy=$(yq eval ".clusters[$i].spec.proxyName // \"\"" "$wc_file")
+      registry=$(yq eval ".clusters[$i].spec.imageRegistry // \"\"" "$wc_file")
 
-	      echo "Run $cmd"
-        eval $cmd
-        if [ $? -eq 0 ]; then
-            onboarded_cluster_name="$mgmt.$prov.$name"
-            if ! grep -qxF "$onboarded_cluster_name" "$ONBOARDED_CLUSTER_INDEX_FILE"; then
-                # If it doesn't exist, append it
-                echo "$onboarded_cluster_name" >> "$ONBOARDED_CLUSTER_INDEX_FILE"
-            fi
+      local version clean_version
+      version=$(yq eval ".clusters[$i].spec.topology.version" "$wc_file")
+      clean_version=$(sanitize_version "$version")
+      if ! compare_versions "$clean_version" "$MIN_VERSION"; then
+        log warn "Skipping: the version '$version' of cluster '$name' in namespace '$prov' is NOT supported (< v$MIN_VERSION)"
+        continue
+      fi
+
+      # Build the command
+      local cmd
+      cmd="tanzu tmc mc wc manage \"$name\" -m \"$mgmt\" -p \"$prov\" --cluster-group \"$group\""
+      [[ -n "$proxy" ]] && cmd+=" --proxy-name \"$proxy\""
+      [[ -n "$registry" ]] && cmd+=" --image-registry \"$registry\""
+
+      log info "Run $cmd"
+      if ! eval "$cmd"; then
+        log error "❌ Failed to manage $name, please re-run this script later (required)"
+      else
+        if wait_cluster_ready "$mgmt" "$prov" "$name"; then
+          onboarded_cluster_name="$mgmt.$prov.$name"
+          if ! grep -qxF "$onboarded_cluster_name" "$ONBOARDED_CLUSTER_INDEX_FILE"; then
+            # If it doesn't exist, append it
+            echo "$onboarded_cluster_name" >>"$ONBOARDED_CLUSTER_INDEX_FILE"
+          fi
+        else
+          log error "❌ Cluster $name is not ready, please double check it in the TMC-SM and ensure it's ready and then re-run this script again (required)"
         fi
+      fi
     done
-done < $REGISTERED_FILE
+  done <$REGISTERED_FILE
+}
+
+function main() {
+  init
+
+  # Register the management clusters.
+  onboard_mgmt_clusters
+
+  # Manage the workload clusters.
+  onboard_workload_clusters
+}
+
+main
