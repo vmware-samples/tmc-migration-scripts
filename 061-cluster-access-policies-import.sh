@@ -27,6 +27,7 @@ import_cluster_rolebindings() {
         fi
 
         jq '.effective[] | select(.spec.inherited != true).spec.policySpec' $resource_full_name.json > $rolebindings
+        update_default_group $rolebindings
 
         IFS='_' read -r mgmt prvn name <<< "$resource_full_name"
         if ! check_onboarded_cluster $mgmt $prvn $name; then
@@ -35,6 +36,7 @@ import_cluster_rolebindings() {
         fi
         log info "Importing access policies on cluster $mgmt/$prvn/$name ..."
         import_rolebindings "$rolebindings" "$scope" "$name" "fullName.managementClusterName=$mgmt&fullName.provisionerName=$prvn"
+        sleep 2
     done
     popd > /dev/null
 }
@@ -57,14 +59,15 @@ import_namespace_rolebindings() {
         fi
 
         jq '.effective[] | select(.spec.inherited != true).spec.policySpec' $resource_full_name.json > $rolebindings
+        update_default_group $rolebindings
 
         IFS='_' read -r mgmt prvn cls name <<< "$resource_full_name"
         if ! check_onboarded_cluster $mgmt $prvn $cls; then
             log info "[SKIP] undesired namespace $mgmt/$prvn/$cls/$name"
             continue
         fi
-
         import_rolebindings "$rolebindings" "clusters/$cls/$scope" "$name" "fullName.managementClusterName=$mgmt&fullName.provisionerName=$prvn"
+        sleep 2
     done
     popd > /dev/null
 }

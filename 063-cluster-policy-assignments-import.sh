@@ -14,14 +14,12 @@ import_cluster_policies() {
     policies_temp="$TEMP_DIR/$scope"
     mkdir -p $policies_temp
 
-    generate_policy_spec "$scope" "$name" "$policies_temp"
+    generate_policy_spec "$scope" "$policies_temp"
 
     pushd $policies_temp > /dev/null
         for p_file in $(ls *.yaml)
         do
-            cls_full_name=$(echo "$p_file" | sed 's/.yaml$//g')
-
-            IFS='_' read -r mgmt prvn cls <<< "$cls_full_name"
+            IFS='_' read -r mgmt prvn cls policy_name <<< $(echo "$p_file" | sed 's/.yaml$//g')
 
             if ! check_onboarded_cluster $mgmt $prvn $cls; then
                 log info "[SKIP] undesired cluster $mgmt/$prvn/$name"
@@ -32,6 +30,7 @@ import_cluster_policies() {
 
             log info "Importing policy assignment on cluster $mgmt/$prvn/$cls ..." 
             tanzu mission-control policy create -s cluster -f $p_file
+            sleep 2
         done
     popd > /dev/null
 }

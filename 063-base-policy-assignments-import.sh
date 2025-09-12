@@ -20,6 +20,7 @@ import_org_policies() {
         do
             yq -i 'del(.fullName.orgId)' $p_file
             tanzu mission-control policy create -s organization -f $p_file
+            sleep 2
         done
     popd > /dev/null
 }
@@ -29,16 +30,17 @@ import_clustergroup_policies() {
     policies_temp="$TEMP_DIR/$scope"
     mkdir -p $policies_temp
 
-    generate_policy_spec "$scope" "$name" "$policies_temp"
+    generate_policy_spec "$scope" "$policies_temp"
 
     pushd $policies_temp > /dev/null
         for p_file in $(ls *.yaml)
         do
-            cg_name=$(echo "$p_file" | sed 's/.yaml$//g')
+            IFS='_' read -r cg_name policy_name <<< $(echo "$p_file" | sed 's/.yaml$//g')
 
             yq e -i ".fullName.clusterGroupName = \"$cg_name\"" $p_file
             log info "Importing policies on clustergroup ${cg_name} ..."
             tanzu mission-control policy create -s clustergroup -f $p_file
+            sleep 2
         done
     popd > /dev/null
 }
@@ -48,16 +50,17 @@ import_workspace_policies() {
     policies_temp="$TEMP_DIR/$scope"
     mkdir -p $policies_temp
 
-    generate_policy_spec "$scope" "$name" "$policies_temp"
+    generate_policy_spec "$scope" "$policies_temp"
 
     pushd $policies_temp > /dev/null
         for p_file in $(ls *.yaml)
         do
-            ws_name=$(echo "$p_file" | sed 's/.yaml$//g')
+            IFS='_' read -r ws_name policy_name <<< $(echo "$p_file" | sed 's/.yaml$//g')
 
             yq e -i ".fullName.workspaceName = \"$ws_name\"" $p_file
             log info "Importing policies on workspace ${ws_name} ..."
             tanzu mission-control policy create -s workspace -f $p_file
+            sleep 2
         done
     popd > /dev/null
 }

@@ -443,8 +443,11 @@ Operation includes:
 
 18. Import resources `[cluster:git, cluster:kustomization, cluster:helm, cluster:helm-release, admin:settings, admin:access]` into SM by running scripts **055-060**
 
-19. Import resources `[access policies, policy templates, policy assignments]` into SM by running scripts **061-063**.  **Notes**: The initial access policies are imported with the identities settings from TMC SaaS, the customer should manually edit the access policies with correct user and usergroup identities in the idP of TMC SM.
-
+19. Import resources `[access policies, policy templates, policy assignments]` into SM by running scripts **061-063**.  **Notes**: The initial access policies are imported with the identities settings from TMC SaaS, the customer should manually edit the access policies with correct user and usergroup identities in the idP of TMC SM. To run the scripts **061-\***, it's required to export below environment variables, which should be the same values as the settings idpGroupRoles.admin and idpGroupRoles.member of TMC SM deployment.
+    ```shell
+    export ADMIN_IDP_GROUP="tmc:admin"
+    export MEMBER_IDP_GROUP="tmc:member"
+    ```
 21. Import resources `[Data protection]` 064. **Notes**: TBD to clarify the credentials depends on by DP should be imported in the previous steps.
 
 ### Use jupyter notebook
