@@ -5,6 +5,7 @@ source utils/log.sh
 source utils/saas-api-call.sh
 
 register_last_words "Export access policies"
+INTERVAL=2
 
 export_org_rolebindings() {
     role_bindings=$1
@@ -51,6 +52,7 @@ do
     workspace_rolebindings="$workspace_scope/$name.json"
     log info "Exporting rolebindings on workspace $name ..."
     export_rolebindings "$uid" "$workspace_rolebindings"
+    sleep $INTERVAL
 done
 
 clustergroup_scope="$DIR/clustergroups"
@@ -64,6 +66,7 @@ do
     clustegroup_rolebindings="$clustergroup_scope/$name.json"
     log info "Exporting rolebindings on clustergroup $name ..."
     export_rolebindings "$uid" "$clustegroup_rolebindings"
+    sleep $INTERVAL
 done
 
 cluster_scope="$DIR/clusters"
@@ -83,6 +86,7 @@ do
     cluster_rolebindings="$cluster_scope/${mgmt}_${prvn}_${name}.json"
     log info "Exporting rolebindings on cluster /${mgmt}/${prvn}/${name} ..."
     export_rolebindings "$uid" "$cluster_rolebindings"
+    sleep $INTERVAL
 done
 
 namespace_scope="$DIR/namespaces"
@@ -98,5 +102,6 @@ do
         namespace_rolebindings="$namespace_scope/${mgmt}_${prvn}_${cls}_${name}.json"
         log info "Exporting rolebindings on namespace /${mgmt}/${prvn}/${cls}/${name} ..."
         export_rolebindings "$uid" "$namespace_rolebindings"
+        sleep $INTERVAL
     done
 done

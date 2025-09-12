@@ -8,6 +8,7 @@ register_last_words "Import access policies"
 DATA_DIR="data"
 SRC_DIR="$DATA_DIR/policies/iam"
 TEMP_DIR="$PWD/$SRC_DIR/$(date +%s)"
+INTERVAL=2
 
 import_cluster_rolebindings() {
     scope="clusters"
@@ -26,7 +27,7 @@ import_cluster_rolebindings() {
             continue
         fi
 
-        jq '.effective[] | select(.spec.inherited != true).spec.policySpec' $resource_full_name.json > $rolebindings
+        jq '.effective[] | select(.spec.inherited != true).spec.policySpec' $resource_full_name.json | update_default_group > $rolebindings
 
         IFS='_' read -r mgmt prvn name <<< "$resource_full_name"
         if ! check_onboarded_cluster $mgmt $prvn $name; then
@@ -35,6 +36,7 @@ import_cluster_rolebindings() {
         fi
         log info "Importing access policies on cluster $mgmt/$prvn/$name ..."
         import_rolebindings "$rolebindings" "$scope" "$name" "fullName.managementClusterName=$mgmt&fullName.provisionerName=$prvn"
+        sleep $INTERVAL
     done
     popd > /dev/null
 }
@@ -56,15 +58,15 @@ import_namespace_rolebindings() {
             continue
         fi
 
-        jq '.effective[] | select(.spec.inherited != true).spec.policySpec' $resource_full_name.json > $rolebindings
+        jq '.effective[] | select(.spec.inherited != true).spec.policySpec' $resource_full_name.json | update_default_group > $rolebindings
 
         IFS='_' read -r mgmt prvn cls name <<< "$resource_full_name"
         if ! check_onboarded_cluster $mgmt $prvn $cls; then
             log info "[SKIP] undesired namespace $mgmt/$prvn/$cls/$name"
             continue
         fi
-
         import_rolebindings "$rolebindings" "clusters/$cls/$scope" "$name" "fullName.managementClusterName=$mgmt&fullName.provisionerName=$prvn"
+        sleep $INTERVAL
     done
     popd > /dev/null
 }

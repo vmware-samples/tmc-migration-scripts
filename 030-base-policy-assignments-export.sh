@@ -8,6 +8,7 @@ log "************************************************************************"
 log "* Exporting Policy Assignments from TMC SaaS ..."
 log "************************************************************************"
 
+INTERVAL=2
 DATA_DIR="data"
 DIR="$DATA_DIR/policies/assignments"
 mkdir -p $DIR
@@ -30,6 +31,7 @@ do
     workspace_policies="$workspace_scope/$name.yaml"
     log info "Exporting policies on workspace $name ..."
     tanzu mission-control policy list -s workspace -n $name -o yaml > $workspace_policies
+    sleep $INTERVAL
 done
 
 clustergroup_scope="$DIR/clustergroups"
@@ -43,6 +45,7 @@ do
     clustegroup_policies="$clustergroup_scope/$name.yaml"
     log info "Exporting policies on clustergroup $name ..."
     tanzu mission-control policy list -s clustergroup -n $name -o yaml > $clustegroup_policies
+    sleep $INTERVAL
 done
 
 cluster_scope="$DIR/clusters"
@@ -61,4 +64,5 @@ do
     cluster_policies="$cluster_scope/${mgmt}_${prvn}_${name}.yaml"
     log info "Exporting policies on cluster /${mgmt}/${prvn}/${name} ..."
     tanzu mission-control policy list -s cluster -n $name -m $mgmt -p $prvn -o yaml > $cluster_policies
+    sleep $INTERVAL
 done

@@ -11,6 +11,7 @@ log "************************************************************************"
 DATA_DIR="data"
 DIR="$DATA_DIR/policies/templates"
 TEMP_DIR="$SRC_DIR/$(date +%s)"
+INTERVAL=2
 
 src_templates="$DIR/templates.yaml"
 templates_temp_dir="$TEMP_DIR/templates"
@@ -34,4 +35,5 @@ do
     fi
     log info "Importing policy template ${name} ..."
     tanzu tmc policy policy-template  create --object-file $object_file --description "$description" $data_inventory
+    sleep $INTERVAL
 done
