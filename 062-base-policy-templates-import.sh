@@ -34,4 +34,5 @@ do
     fi
     log info "Importing policy template ${name} ..."
     tanzu tmc policy policy-template  create --object-file $object_file --description "$description" $data_inventory
+    sleep 2
 done

@@ -30,6 +30,7 @@ do
     workspace_policies="$workspace_scope/$name.yaml"
     log info "Exporting policies on workspace $name ..."
     tanzu mission-control policy list -s workspace -n $name -o yaml > $workspace_policies
+    sleep 2
 done
 
 clustergroup_scope="$DIR/clustergroups"
@@ -43,6 +44,7 @@ do
     clustegroup_policies="$clustergroup_scope/$name.yaml"
     log info "Exporting policies on clustergroup $name ..."
     tanzu mission-control policy list -s clustergroup -n $name -o yaml > $clustegroup_policies
+    sleep 2
 done
 
 cluster_scope="$DIR/clusters"
@@ -61,4 +63,5 @@ do
     cluster_policies="$cluster_scope/${mgmt}_${prvn}_${name}.yaml"
     log info "Exporting policies on cluster /${mgmt}/${prvn}/${name} ..."
     tanzu mission-control policy list -s cluster -n $name -m $mgmt -p $prvn -o yaml > $cluster_policies
+    sleep 2
 done

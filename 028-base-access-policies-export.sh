@@ -51,6 +51,7 @@ do
     workspace_rolebindings="$workspace_scope/$name.json"
     log info "Exporting rolebindings on workspace $name ..."
     export_rolebindings "$uid" "$workspace_rolebindings"
+    sleep 2
 done
 
 clustergroup_scope="$DIR/clustergroups"
@@ -64,6 +65,7 @@ do
     clustegroup_rolebindings="$clustergroup_scope/$name.json"
     log info "Exporting rolebindings on clustergroup $name ..."
     export_rolebindings "$uid" "$clustegroup_rolebindings"
+    sleep 2
 done
 
 cluster_scope="$DIR/clusters"
@@ -83,6 +85,7 @@ do
     cluster_rolebindings="$cluster_scope/${mgmt}_${prvn}_${name}.json"
     log info "Exporting rolebindings on cluster /${mgmt}/${prvn}/${name} ..."
     export_rolebindings "$uid" "$cluster_rolebindings"
+    sleep 2
 done
 
 namespace_scope="$DIR/namespaces"
@@ -98,5 +101,6 @@ do
         namespace_rolebindings="$namespace_scope/${mgmt}_${prvn}_${cls}_${name}.json"
         log info "Exporting rolebindings on namespace /${mgmt}/${prvn}/${cls}/${name} ..."
         export_rolebindings "$uid" "$namespace_rolebindings"
+        sleep 2
     done
 done

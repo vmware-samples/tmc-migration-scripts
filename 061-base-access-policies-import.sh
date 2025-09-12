@@ -20,7 +20,10 @@ import_org_rolebindings() {
     direct_effectives=$(jq '.policyList[] | length' rolebindings.json)
     if [ $direct_effectives -ne 0 ]; then
         jq '.policyList[0] | del(.meta)' rolebindings.json > $rolebindings
+        update_default_group $rolebindings
+
         import_rolebindings "$rolebindings" "$scope"
+        sleep 2
     fi
     popd > /dev/null
 }
@@ -45,8 +48,10 @@ import_clustergroup_rolebindings() {
         fi
 
         jq '.effective[] | select(.spec.inherited != true).spec.policySpec' $resource_name.json > $rolebindings
-        
+        update_default_group $rolebindings
+
         import_rolebindings "$rolebindings" "$scope" "$resource_name"
+        sleep 2
     done
     popd > /dev/null
 }
@@ -74,8 +79,10 @@ import_workspace_rolebindings() {
         fi
 
         jq '.effective[] | select(.spec.inherited != true).spec.policySpec' $resource_name.json > $rolebindings
-        
+        update_default_group $rolebindings
+
         import_rolebindings "$rolebindings" "$scope" "$resource_name"
+        sleep 2
     done
     popd > /dev/null
 }
