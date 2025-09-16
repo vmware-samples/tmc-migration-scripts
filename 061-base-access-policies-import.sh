@@ -8,6 +8,7 @@ register_last_words "Import access policies"
 DATA_DIR="data"
 SRC_DIR="$DATA_DIR/policies/iam"
 TEMP_DIR="$PWD/$SRC_DIR/$(date +%s)"
+INTERVAL=2
 
 import_org_rolebindings() {
     scope="organization"
@@ -19,8 +20,10 @@ import_org_rolebindings() {
     rolebindings="$org_temp/rolebindings.json"
     direct_effectives=$(jq '.policyList[] | length' rolebindings.json)
     if [ $direct_effectives -ne 0 ]; then
-        jq '.policyList[0] | del(.meta)' rolebindings.json > $rolebindings
+        jq '.policyList[0] | del(.meta)' rolebindings.json | update_default_group > $rolebindings
+
         import_rolebindings "$rolebindings" "$scope"
+        sleep $INTERVAL
     fi
     popd > /dev/null
 }
@@ -44,9 +47,10 @@ import_clustergroup_rolebindings() {
             continue
         fi
 
-        jq '.effective[] | select(.spec.inherited != true).spec.policySpec' $resource_name.json > $rolebindings
-        
+        jq '.effective[] | select(.spec.inherited != true).spec.policySpec' $resource_name.json | update_default_group > $rolebindings
+
         import_rolebindings "$rolebindings" "$scope" "$resource_name"
+        sleep $INTERVAL
     done
     popd > /dev/null
 }
@@ -73,9 +77,10 @@ import_workspace_rolebindings() {
             continue
         fi
 
-        jq '.effective[] | select(.spec.inherited != true).spec.policySpec' $resource_name.json > $rolebindings
-        
+        jq '.effective[] | select(.spec.inherited != true).spec.policySpec' $resource_name.json | update_default_group > $rolebindings
+
         import_rolebindings "$rolebindings" "$scope" "$resource_name"
+        sleep $INTERVAL
     done
     popd > /dev/null
 }
