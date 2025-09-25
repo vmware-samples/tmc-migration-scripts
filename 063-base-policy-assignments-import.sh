@@ -6,8 +6,8 @@ source utils/policy-helper.sh
 register_last_words "Import policy assignments"
 
 DATA_DIR="data"
-DIR="$PWD/$DATA_DIR/policies/assignments"
-TEMP_DIR="$DIR/$(date +%s)"
+SRC_DIR="$PWD/$DATA_DIR/policies/assignments"
+TEMP_DIR="$SRC_DIR/$(date +%s)"
 INTERVAL=2
 
 import_org_policies() {
@@ -16,7 +16,7 @@ import_org_policies() {
     mkdir -p $policies_temp
 
     pushd $policies_temp > /dev/null
-        yq '.policies[]' -s '.fullName.name' $DIR/$scope/policies.yaml
+        yq '.policies[]' -s '.fullName.name' $SRC_DIR/$scope/policies.yaml
         for p_file in $(ls *.yml)
         do
             yq -i 'del(.fullName.orgId)' $p_file

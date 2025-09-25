@@ -9,11 +9,11 @@ log "* Import Policy Templates to TMC SM ..."
 log "************************************************************************"
 
 DATA_DIR="data"
-DIR="$DATA_DIR/policies/templates"
+SRC_DIR="$DATA_DIR/policies/templates"
 TEMP_DIR="$SRC_DIR/$(date +%s)"
 INTERVAL=2
 
-src_templates="$DIR/templates.yaml"
+src_templates="$SRC_DIR/templates.yaml"
 templates_temp_dir="$TEMP_DIR/templates"
 mkdir -p $templates_temp_dir
 total_count=$(yq e '.templates | length' $src_templates)
