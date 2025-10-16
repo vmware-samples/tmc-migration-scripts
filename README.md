@@ -371,6 +371,7 @@ Operation includes:
 
 12. Run script [048-base-managed\_clusters-input\_from\_user.sh](./048-base-managed_clusters-input_from_user.sh) to generate a Kubeconfig index file for the onboarding management clusters. Replace the path placeholders `/path/to/the/real/mc_kubeconfig/file` in the generated Kubeconfig index file.
     Then run script [048-base-managed\_clusters-onboard.sh](./048-base-managed_clusters-onboard.sh) to onboard the exported clusters onto SM.
+    By default, clusters are onboarded sequentially. Set the CLUSTERS_ONBOARD_BATCH_SIZE environment variable to control the parallel batch size."
 
 13. Run script [049-base-attached\_clusters-input\_from_user.sh](./049-base-attached_clusters-input_from_user.sh) to generate a Kubeconfig index file for the attached clusters. Replace the path placeholders `/path/to/the/real/wc_kubeconfig/file` in the generated Kubeconfig index file.
 

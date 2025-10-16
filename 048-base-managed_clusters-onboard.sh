@@ -12,6 +12,9 @@ PLACEHOLDER_TEXT="/path/to/the/real/mc_kubeconfig/file"
 MIN_VERSION="1.28.0"
 ONBOARDED_CLUSTER_INDEX_FILE="$CLUSTER_DATA_DIR/onboarded-clusters-name-index"
 
+# Configuration for parallel processing
+CLUSTERS_ONBOARD_BATCH_SIZE=${CLUSTERS_ONBOARD_BATCH_SIZE:-1}
+
 function init () {
   # If the $MC_KUBECONFIG_INDEX_FILE file is NOT completely updated, then stop to proceed.
   if grep -q "$PLACEHOLDER_TEXT" "$MC_KUBECONFIG_INDEX_FILE"; then
@@ -287,6 +290,50 @@ compare_versions() {
   [ "$(printf "%s\n%s" "$2" "$1" | sort -V | head -n1)" = "$2" ]
 }
 
+onboard_workload_cluster() {
+  local wc_file="$1"
+  local i="$2"
+  local name mgmt prov group proxy registry
+  name=$(yq eval ".clusters[$i].fullName.name" "$wc_file")
+  mgmt=$(yq eval ".clusters[$i].fullName.managementClusterName" "$wc_file")
+  prov=$(yq eval ".clusters[$i].fullName.provisionerName" "$wc_file")
+  group=$(yq eval ".clusters[$i].spec.clusterGroupName" "$wc_file")
+  proxy=$(yq eval ".clusters[$i].spec.proxyName // \"\"" "$wc_file")
+  registry=$(yq eval ".clusters[$i].spec.imageRegistry // \"\"" "$wc_file")
+
+  local version clean_version
+  version=$(yq eval ".clusters[$i].spec.topology.version" "$wc_file")
+  clean_version=$(sanitize_version "$version")
+  if ! compare_versions "$clean_version" "$MIN_VERSION"; then
+    log warn "Skipping: the version '$version' of cluster '$name' in namespace '$prov' is NOT supported (< v$MIN_VERSION)"
+    return 0
+  fi
+
+  # Build the command
+  local cmd
+  cmd="tanzu tmc mc wc manage \"$name\" -m \"$mgmt\" -p \"$prov\" --cluster-group \"$group\""
+  [[ -n "$proxy" ]] && cmd+=" --proxy-name \"$proxy\""
+  [[ -n "$registry" ]] && cmd+=" --image-registry \"$registry\""
+
+  log info "Run $cmd"
+  if ! eval "$cmd"; then
+    log error "❌ Failed to manage $name, please re-run this script later (required)"
+    return 1
+  else
+    if wait_cluster_ready "$mgmt" "$prov" "$name"; then
+      onboarded_cluster_name="$mgmt.$prov.$name"
+      if ! grep -qxF "$onboarded_cluster_name" "$ONBOARDED_CLUSTER_INDEX_FILE"; then
+        # If it doesn't exist, append it
+        echo "$onboarded_cluster_name" >>"$ONBOARDED_CLUSTER_INDEX_FILE"
+      fi
+      return 0
+    else
+      log error "❌ Cluster $name is not ready, please double check it in the TMC-SM and ensure it's ready and then re-run this script again (required)"
+      return 1
+    fi
+  fi
+}
+
 function onboard_workload_clusters () {
   # Ensure the index file exists before grepping
   [ -f "$ONBOARDED_CLUSTER_INDEX_FILE" ] || touch "$ONBOARDED_CLUSTER_INDEX_FILE"
@@ -306,46 +353,42 @@ function onboard_workload_clusters () {
 
     # Count how many workload clusters exist in the file
     cluster_count=$(yq eval '.clusters | length' "$wc_file")
-
-    for ((i=0; i<cluster_count; i+=1)); do
-      local name mgmt prov group proxy registry
-      name=$(yq eval ".clusters[$i].fullName.name" "$wc_file")
-      mgmt=$(yq eval ".clusters[$i].fullName.managementClusterName" "$wc_file")
-      prov=$(yq eval ".clusters[$i].fullName.provisionerName" "$wc_file")
-      group=$(yq eval ".clusters[$i].spec.clusterGroupName" "$wc_file")
-      proxy=$(yq eval ".clusters[$i].spec.proxyName // \"\"" "$wc_file")
-      registry=$(yq eval ".clusters[$i].spec.imageRegistry // \"\"" "$wc_file")
-
-      local version clean_version
-      version=$(yq eval ".clusters[$i].spec.topology.version" "$wc_file")
-      clean_version=$(sanitize_version "$version")
-      if ! compare_versions "$clean_version" "$MIN_VERSION"; then
-        log warn "Skipping: the version '$version' of cluster '$name' in namespace '$prov' is NOT supported (< v$MIN_VERSION)"
-        continue
+    log info "Processing $cluster_count clusters in parallel batches of $CLUSTERS_ONBOARD_BATCH_SIZE"
+  
+    local batch_num=0
+    for ((start=0; start<cluster_count; start+=CLUSTERS_ONBOARD_BATCH_SIZE)); do
+      batch_num=$((batch_num + 1))
+      local end=$((start + CLUSTERS_ONBOARD_BATCH_SIZE - 1))
+      if [[ $end -ge $cluster_count ]]; then
+        end=$((cluster_count - 1))
       fi
-
-      # Build the command
-      local cmd
-      cmd="tanzu tmc mc wc manage \"$name\" -m \"$mgmt\" -p \"$prov\" --cluster-group \"$group\""
-      [[ -n "$proxy" ]] && cmd+=" --proxy-name \"$proxy\""
-      [[ -n "$registry" ]] && cmd+=" --image-registry \"$registry\""
-
-      log info "Run $cmd"
-      if ! eval "$cmd"; then
-        log error "❌ Failed to manage $name, please re-run this script later (required)"
-      else
-        if wait_cluster_ready "$mgmt" "$prov" "$name"; then
-          onboarded_cluster_name="$mgmt.$prov.$name"
-          if ! grep -qxF "$onboarded_cluster_name" "$ONBOARDED_CLUSTER_INDEX_FILE"; then
-            # If it doesn't exist, append it
-            echo "$onboarded_cluster_name" >>"$ONBOARDED_CLUSTER_INDEX_FILE"
-          fi
-        else
-          log error "❌ Cluster $name is not ready, please double check it in the TMC-SM and ensure it's ready and then re-run this script again (required)"
+      
+      log info "Processing batch $batch_num: clusters $((start + 1))-$((end + 1)) of $cluster_count"
+      local pids=()
+      for ((i=start; i<=end; i++)); do
+        # Start the cluster processing in background
+        onboard_workload_cluster "$wc_file" "$i" &
+        pids+=($!)
+      done
+      
+      local failed_jobs=0
+      for pid in "${pids[@]}"; do
+        if ! wait "$pid"; then
+          failed_jobs=$((failed_jobs + 1))
         fi
+      done
+      
+      if [[ $failed_jobs -gt 0 ]]; then
+        log warn "Batch $batch_num completed with $failed_jobs failed jobs out of $((end - start + 1)) total jobs"
+      else
+        log info "Batch $batch_num completed successfully"
       fi
     done
+    
+    log info "All clusters processing completed for management cluster: $mc_name"
   done <$REGISTERED_FILE
+  
+  log info "All management clusters processing completed"
 }
 
 function main() {
