@@ -18,6 +18,13 @@ mkdir -p ${DPDIR}
 # Save backup location for both org and clsuter
 echo "Saving backup-location ......"
 tanzu tmc data-protection backup-location list -o yaml -s org > ${DPDIR}/backup_location_org.yaml
+i=0
+while read -r name; do
+    ca_certs=$(tanzu tmc data-protection backup-location get ${name} -o yaml | yq -r '.spec.caCert')
+    yq -i ".backupLocations[$i].spec.caCert=\"${ca_certs}\"" ${DPDIR}/backup_location_org.yaml
+    i=$((i+1))
+done < <(yq -r '.backupLocations[] | .fullName.name' ${DPDIR}/backup_location_org.yaml)
+
 tanzu tmc data-protection backup-location list -o yaml -s cluster > ${DPDIR}/backup_location_cluster.yaml
 
 # Save schedule
