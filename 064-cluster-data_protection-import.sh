@@ -1,8 +1,10 @@
 #!/bin/bash
 
 set +e
+source utils/kubeconfig.sh
 
 ONBOARDED_CLUSTER_INDEX_FILE="data/clusters/onboarded-clusters-name-index"
+
 TEMPFILE=/tmp/_temp_dp_file_$(date +%s)
 TEMPKUBECONFIG=${TEMPFILE}_kubeconfig
 DPDIR=data/data-protection
@@ -151,7 +153,10 @@ function create_old_bsl() {
         clname=$(echo "${elem}" | yq '.fullName.clusterName')
         mcname=$(echo "${elem}" | yq '.fullName.managementClusterName')
         provname=$(echo "${elem}" | yq '.fullName.provisionerName')
-        ${TANZU} tmc cluster kubeconfig get ${clname} -m ${mcname} -p ${provname} > ${TEMPKUBECONFIG}
+        if ! get_kubeconfig ${clname} ${provname} ${mcname} ${TEMPKUBECONFIG}; then
+            echo "Failed to get kubeconfig for cluster ${mcname}/${provname}/${clname}, skip importing BSL for this cluster"
+            continue
+        fi
         # Create new BSL
         bslname=$(echo "${elem}" | yq '.fullName.name')
         bslprefix=$(echo "${elem}" | yq '.spec.prefix')
