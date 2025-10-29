@@ -1,6 +1,7 @@
 #! /bin/bash
 
 source utils/common.sh
+source utils/kubeconfig.sh
 
 register_last_words "Resync rolebindings on clusters and namespaces"
 
@@ -30,15 +31,15 @@ fi
 
 while IFS="." read -r mgmt prvn cls; do
     log info "Connecting to the cluster $mgmt/$prvn/$cls..."
-    if ! tanzu tmc cluster kubeconfig get $cls -m $mgmt -p $prvn > ${TEMPKUBECONFIG} 2>/dev/null; then
-        log error "Failed to get kubeconfig for cluster $mgmt/$prvn/$cls"
-        exit 1
+    if ! get_kubeconfig ${cls} ${prvn} ${mgmt} ${TEMPKUBECONFIG}; then
+        log error "Failed to get kubeconfig for cluster $mgmt/$prvn/$cls, skip resyncing access policies for this cluster"
+        continue
     fi
 
     # Verify cluster connection
     if ! kubectl cluster-info >/dev/null 2>&1; then
-        log error "Failed to connect to cluster $mgmt/$prvn/$cls"
-        exit 1
+        log error "Failed to connect to cluster $mgmt/$prvn/$cls, skip resyncing access policies for this cluster"
+        continue
     fi
 
     log info "Delete stale custom cluster roles for $mgmt/$prvn/$cls ..."
@@ -48,8 +49,8 @@ while IFS="." read -r mgmt prvn cls; do
 
     org_id=$(kubectl -n $TMC_NAMESPACE get cm stack-config -o jsonpath='{.data.org_id}' 2>/dev/null)
     if [[ -z "$org_id" ]]; then
-        log error "Failed to get org_id for the cluster $mgmt/$prvn/$cls"
-        exit 1
+        log error "Failed to get org_id for the cluster $mgmt/$prvn/$cls, skip resyncing access policies for this cluster"
+        continue
     fi
   
     log info "Delete stale cluster rolebindings on $mgmt/$prvn/$cls ..."
