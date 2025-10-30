@@ -35,7 +35,7 @@ yq -r '.backupLocations[] | .spec.assignedGroups[] | select(.clustergroup) | .cl
     echo "    clustergroup: ${groupname}"
     schd=$(tanzu tmc data-protection schedule list -s clustergroup --cluster-group-name ${groupname} -o json)
     if [[ "${schd}" != "{}" ]]; then
-        schds=$(echo ${schd} | yq -o yaml -P '.schedules')
+        schds=$(echo -n "${schd}" | yq -o yaml -P '.schedules')
         if [[ "${schds}" != "null" ]] && [[ "${schds}" != "[]" ]]; then
             echo "${schds}" >> ${DPDIR}/schedule-clustergroup.yaml
         fi

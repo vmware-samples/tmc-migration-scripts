@@ -34,7 +34,12 @@ function create_dp_resources() {
     local keyname=$2
     local dpcmd=$3
     local scope=$4
-    local total=$(yq -r ".totalCount" ${DPDIR}/${filename})
+    local total="0"
+    if [[ "$scope" == "clustergroup" && "$keyname" == "schedules" ]]; then
+        total=$(yq eval ". | length" ${DPDIR}/${filename})
+    else
+        total=$(yq -r ".totalCount" ${DPDIR}/${filename})
+    fi
 
     if [[ "${total}" == "0" ]]; then
         echo "==> No data in ${filename}"
@@ -47,7 +52,12 @@ function create_dp_resources() {
     do
         echo "==> Loading ${idx}/${total} in ${filename} ......"
         # Do we need to delete '.meta'?
-        local elem=$(yq -o yaml ".${keyname}[${idx}]" ${DPDIR}/${filename} | yq -o yaml 'del(.meta)' | yq -o yaml 'del(.status)')
+        local name=${keyname}
+        if [[ "$keyname" == "schedules" && "$scope" == "clustergroup" ]]; then
+            name=""
+        fi
+
+        local elem=$(yq -o yaml ".${name}[${idx}]" ${DPDIR}/${filename} | yq -o yaml 'del(.meta)' | yq -o yaml 'del(.status)')
         if [[ "${elem}" == "null" ]]; then
             break
         fi
@@ -105,7 +115,7 @@ function enable_dataprotection() {
     do
         echo "==> Loading ${idx}/${total} in ${filename} ......"
         # Do we need to delete '.meta'?
-        yq -o yaml ".[${idx}]" ${DPDIR}/${filename} | yq -o yaml 'del(.status)' > ${TEMPFILE}
+        yq -o yaml ".[${idx}]" ${DPDIR}/${filename} | yq -o yaml 'del(.spec.backupLocationNames)' | yq -o yaml 'del(.status)' > ${TEMPFILE}
         cat ${TEMPFILE}
         if [[ "${scope}" == "cluster" ]]; then
             fullname=$(yq '.fullName | .managementClusterName + "." + .provisionerName + "." + .clusterName' ${TEMPFILE})
