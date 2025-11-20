@@ -58,7 +58,7 @@ This is a repo to store the scripts in the [Migrate TMC SaaS to SM](https://docs
 | [045-clustergroup-kustomizations-import.sh](./045-clustergroup-kustomizations-import.sh)                 | Import kustomization resources to cluster groups             | READY  |                                                                                                                                                            |
 | [046-clustergroup-helms-import.sh](./046-clustergroup-helms-import.sh)                                   | Import helm resources to cluster groups                      | READY  |                                                                                                                                                            |
 | [047-clustergroup-helm-releases-import.sh](./047-clustergroup-helm-releases-import.sh)                   | Import helm release resources to cluster groups              | READY  |                                                                                                                                                            |
-| [048-base-managed\_clusters-onboard.sh](./048-base-managed_clusters-onboard.sh)                          | Onboard the managed TKG clusters to TMC SM                   | READY    | - VKS (aka. TKGs) and TKGm clusters  - Prepare the required MC Kubeconfig index file with [048-base-managed\_clusters-input\_from\_user.sh](./048-base-managed_clusters-input_from_user.sh) |
+| [048-base-managed\_clusters-onboard.sh](./048-base-managed_clusters-onboard.sh)                          | Onboard the managed TKG clusters to TMC SM                   | READY    | - VKS (aka. TKGs) and TKGm clusters  - Prepare the required MC Kubeconfig index file with [048-base-managed\_clusters-input\_from\_user.sh](./048-base-managed_clusters-input_from_user.sh) - Ensure the annotations and agents of TMC SaaS on clusters get removed with [048-base-managed_clusters-ensure-cleanup.sh](./048-base-managed_clusters-ensure-cleanup.sh) |
 | [049-base-attached\_clusters-onboard.sh](./049-base-attached_clusters-onboard.sh)                         | Onboard the attached clusters to TMC SM              | READY    | Attached clusters  - Prepare the required WC Kubeconfig index file with [049-base-attached\_clusters-input\_from\_user.sh](./049-base-attached_clusters-input_from_user.sh)           |
 | [049-base-whole\_clusters-check\_readiness.sh](./049-base-whole_clusters-check_readiness.sh)                         | Check readiness of all onboarded clusters              | READY    | Include both managed clusters and attached clusters           |
 | [050-cluster-namespaces-import.sh](./050-cluster-namespaces-import.sh)                                   | Import managed namespace resources to clusters               | READY  |                                                                                                                                                            |
@@ -370,8 +370,13 @@ Operation includes:
 11. Imports resources `[clustergroup:git repo, clustergroup:kustomization, clustergroup:helm, clustergroup:helm-release]` by running scripts **044-047**.
 
 12. Run script [048-base-managed\_clusters-input\_from\_user.sh](./048-base-managed_clusters-input_from_user.sh) to generate a Kubeconfig index file for the onboarding management clusters. Replace the path placeholders `/path/to/the/real/mc_kubeconfig/file` in the generated Kubeconfig index file.
+
+    Then run script [048-base-managed_clusters-ensure-cleanup.sh](./048-base-managed_clusters-ensure-cleanup.sh) to check and ensure the annotations and agents of TMC SaaS on clusters get removed.
+
     Then run script [048-base-managed\_clusters-onboard.sh](./048-base-managed_clusters-onboard.sh) to onboard the exported clusters onto SM.
-    By default, clusters are onboarded sequentially. Set the CLUSTERS_ONBOARD_BATCH_SIZE environment variable to control the parallel batch size."
+    
+    By default, clusters are onboarded sequentially. Set the CLUSTERS_ONBOARD_BATCH_SIZE environment variable to control the parallel batch size.
+    By default, the timeout of onboarding a cluster is 10 min, set the CLUSTER_ONBOARD_TIMEOUT environment variable if the cluster has many nodes, it also depends on the performance of customer's environment, e.g approximate 3 min per node 
 
 13. Run script [049-base-attached\_clusters-input\_from_user.sh](./049-base-attached_clusters-input_from_user.sh) to generate a Kubeconfig index file for the attached clusters. Replace the path placeholders `/path/to/the/real/wc_kubeconfig/file` in the generated Kubeconfig index file.
 

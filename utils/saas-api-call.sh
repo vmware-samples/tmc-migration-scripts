@@ -2,10 +2,19 @@
 
 source $(dirname "${BASH_SOURCE[0]}")/log.sh
 
+CSP_SUBDOMAIN="console"
+if [ -z "$TMC_ENV" ]; then
+  TMC_ENV="tmc" # "tmc-dev" for dev stack
+fi
+
+if [ "$TMC_ENV" == "tmc-dev" ]; then
+  CSP_SUBDOMAIN="console-stg"
+fi
+
 # The CSP_URL can be overridden by environment variable, e.g for stg CSP
 #  export CSP_URL=https://console-stg.tanzu.broadcom.com/csp/gateway/am/api/auth/api-tokens/authorize
 if [ -z "$CSP_URL" ]; then
-  CSP_URL="https://console.tanzu.broadcom.com/csp/gateway/am/api/auth/api-tokens/authorize"
+  CSP_URL="https://${CSP_SUBDOMAIN}.tanzu.broadcom.com/csp/gateway/am/api/auth/api-tokens/authorize"
 fi
 
 if [ -z "$TANZU_API_TOKEN" ] || [ -z "$ORG_NAME" ]; then
@@ -13,10 +22,12 @@ if [ -z "$TANZU_API_TOKEN" ] || [ -z "$ORG_NAME" ]; then
   exit 1
 fi
 
+
+
 # The URL can be overridden by environment variable, e.g for dev stack
 # export TMC_ENDPOINT={{ORG_NAME}}.tmc-dev.tanzu.broadcom.com
 if [ -z "$TMC_ENDPOINT" ]; then
-  TMC_ENDPOINT="${ORG_NAME}.tanzu.broadcom.com"
+  TMC_ENDPOINT="${ORG_NAME}.${TMC_ENV}.tanzu.broadcom.com"
 fi
 
 curl_api_call() {
