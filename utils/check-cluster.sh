@@ -12,6 +12,9 @@ wait_cluster_ready() {
   START_TIME=$(date +%s)
 
   local TIMEOUT=600
+  if [[ -z "$CLUSTER_ONBOARD_TIMEOUT" ]]; then
+    TIMEOUT=$CLUSTER_ONBOARD_TIMEOUT
+  fi
 
   log info "Checking cluster: $cluster (management_cluster: $management_cluster, provisioner: $provisioner) ..."
 
